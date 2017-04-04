@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# lclam [-v] (-theory name)
+#
+# Run lambdaclam 
+# 
+# 
+
+
+echo "${TEYJUS_HOME}/tjsim --solve \"mathweb_connect \"${1}\" ${2} ${3} ${4}.\" mw_top"
+exec ${TEYJUS_HOME}/tjsim --solve "mathweb_connect \"${1}\" ${2} ${3} ${4}." mw_top
+

@@ -1,0 +1,10 @@
+set colours(si,fore) black
+set colours(wh,back) white
+set colours(if,back) green
+set colours(si,back) cornsilk
+set colours(of,fore) black
+set colours(default,fore) black
+set colours(of,back) goldenrod
+set colours(default,back) white
+set colours(wh,fore) blue
+set colours(if,fore) black

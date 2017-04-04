@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# lclam [-v] (-theory name)
+#
+# Run lambdaclam 
+# 
+# 
+$TEYJUS_HOME/tjsim --solve "lclam." ${1:-test}

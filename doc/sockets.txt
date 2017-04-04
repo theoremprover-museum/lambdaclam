@@ -1,0 +1,131 @@
+
+Teyjus sockets 
+--------------
+
+
+Chuck Liang has added code to Teyjus Lambda-prolog to facilitate communication
+over sockets. This allows Teyjus to connect with applications in other
+languages like Tcl/Tk, Java and prolog or to be part of the math-web toolset.
+
+The original example from Chuck was a Java application which 
+simply allowed a line by line exchange of data with Teyjus.
+This is included in the examples below.
+
+
+Applications using sockets usually come in two types, a server and a client,
+e.g. an httpd serving web pages to a browser client.
+
+Teyjus acts only as a client, so far. The other application must set up 
+the socket, perhaps initiate a call to teyjus (or rely on the user to do so),
+and then wait for the connection.
+
+In order to make a socket connection between two processes, either on the
+same machine, or over the internet each one needs to know which 'port'
+number to connect to. (There is a list of port numbers for well known
+services like http on port 80, mail on 25, telnet on 23 look in /etc/services)
+The calling process must tell Teyjus which hostname and port to connect to.
+Or alternatively if Teyjus is calling a service on a known port
+then it can just be put in the code, e.g in the case of MathWeb.
+If no port is specified then a server process can just pick the
+next available port number on the system it is running on and
+that can be passed to the client.
+
+The teyjus predicate open_socket takes the hostname and port
+and returns two streams, for input and output from the socket.
+
+  open_socket Host Port InStream OutStream,
+
+If the connection is between two processes on the same machine then
+Host is best specified as "localhost".
+
+The InStream and OutStream variables are bound to two normal teyjus i/o
+streams which can used with any of the usual stream i/o predicates
+like input_line and output.
+
+
+Gotchas
+-------
+
+Some issues to watch out for are flushing, the difference between 
+Carriage Return (CR) and Line Feed (LF) and the way different
+prolog-like languages handle a . after reading a predicate.
+Also errors can occur if the socket is already connected or
+your listening server process has stopped working.
+
+Flushing
+--------
+
+After output is written to a socket it does not necessarily
+appear at the other end of the communication link. This depends
+on the i/o settings on the socket at a system level. 
+When writing code for Teyjus it is necessary
+to put in a call to flush the output stream.
+(In debugging if everything just stops in your program,
+make sure the output is being flushed to the other process.)
+Similarly your server process may need to make sure it is
+flushing output at the correct time.
+
+CR/LF
+-----
+
+Sometimes programs like to read things a line at a time, but
+it can be difficult to know what constitutes a line break.
+This is most obvious in the general computing world in the way
+that some operating systems use ASCII 13 as their end-of-line,
+but Unix ones use ASCII code 10. Sometimes you get them both.
+If your program is expecting one and gets the other, then things
+can foul up. Again the symptom can just be an unexplained hang.
+
+Reading Terms ending in a period
+--------------------------------
+If you want a prolog program to treat a piece of text as a term
+and to parse it as though it had been typed in interactively,
+then you might find you need to add a period.
+Sometimes once the string has been processed the period
+effectively disappears ... this needs some investigation.
+
+Examples
+--------
+
+The following examples all show how to create a simple connection
+between Teyjus and another language. 
+
+Chuck's Java example. (in  ~gordon/public/sockets/java)
+ compile the file tjgui.java with something like
+   javac tjgui.java
+ compile the teyjus client with 
+   tjsim tjclient
+ start the java server with
+   java tjgui
+ this may produce some font error output, ignore that 
+ click on the box 'listen'
+ in another window start the tjclient
+   tjsim tjclient
+ start the connection
+   go. 
+ click in the upper text box on the java client
+ type something and then click the send button,
+ the same text should appear in the tjclient
+ type something in the tjclient then press return
+ the dialogue should continue in step
+ exit client and server with CTRL-C
+
+Teyjus and Tcl/Tk
+ I have several bits of code that can be made to copy
+the Java example above
+ 
+ 
+Quintus Prolog
+ start the server
+  quintus
+   [server].
+   go.
+ start the client in another window
+   tjsim client
+    init.
+    loop.
+ just keep hitting return on the client side
+
+C code
+ I have some C server code that I used in debugging the communications
+ between Teyjus and Tcl

@@ -1,0 +1,214 @@
+:Test Cases
+Setup
+include-file setup.script
+NewTest
+include-file test.script
+BC
+include-file BC.script
+CFB
+include-file CFB.script
+TL
+include-file TL.script
+TCS
+include-file TCS.script
+2311Res1
+include-file 2311Res1.script
+2316ARes1
+include-file 2316ARes1.script
+2316BRes1
+include-file 2316BRes1.script
+2364Res1
+include-file 2364Res1.script
+Res2_CW_CW
+include-file Res2_CW_CW.script.txt
+CFB
+include-file Succ_CFB.script
+TCS
+include-file Succ_TCS_TL.script
+TCS2
+include-file Succ_TCS_TL2.script
+CFB_TL
+include-file Succ_CFB_TL.script
+CW_TL
+include-file Succ_CW_TL.script
+TC_o
+include-file TC_o.script
+TC_t
+include-file TC_t.script
+RC
+include-file RC.script
+CNDB
+include-file CNDB.script
+SB
+include-file SB.script
+TL_Badpin
+include-file unsucc_TL_Badpin.script
+:COLLAPSED General
+Exit
+Exit
+Version
+Show-Versions
+Info
+Help
+News
+News
+Command
+?
+:COLLAPSED Specific
+Into.ExaVarP
+Step-Symbol ; set-scope p ; exa-var -
+Into Symbol
+Step-Symbol
+ExaVarP.cur
+set-scope p ; exa-var -
+ExaVarP.top
+exa-var ( p -
+SetupMSC-Go
+Start-Interactive-MSC-Log 2 = MSC with states and actions ; Go
+Into.ExaVarPA
+Step-Symbol ; set-scope pa ; exa-var -
+Transition
+Next-Transition
+ExaVarPA.cur
+set-scope pa ; exa-var -
+ExaVarPA.top
+exa-var ( pa -
+SetupMSC
+Start-Interactive-MSC-Log 2 = MSC with states and actions
+SetFullTraces
+set-trace - 10 ; set-gr-trace - 2
+SetTrace
+set-trace - 10
+Create-Log
+log-on auto.log ; set-trace - 10 ; go ; log-off
+Script
+inc
+Script.Com
+inc script.com
+:COLLAPSED Environment
+Send To
+Output-To
+Send Via
+Output-Via
+Send None
+Output-None
+Start
+Start-SDT-Env
+:Execute
+Go
+Go
+Forever
+Go-Forever
+Transition
+Next-Transition
+Into Symbol
+Step-Symbol
+Over Symbol
+Next-Symbol
+Into Stmt
+Step-Statement
+Over Stmt
+Next-Statement
+Finish
+Finish
+Until Time
+Proceed-Until
+Until Trace
+Next-Visible-Transition
+Until Timer
+Proceed-To-Timer
+Script
+Include-File
+Break
+break
+:COLLAPSED View
+Scope
+Scope
+Set Scope
+Set-Scope
+Up
+Up
+Down
+Down
+Call Stack
+Stack
+Ready Q
+List-Ready-Queue
+Now
+Now
+Process List
+List-Process
+Process
+Examine-PId
+Input Port
+List-Input-Port
+Signal
+Examine-Signal-Instance
+Timer List
+List-Timer
+Timer
+Examine-Timer-Instance
+Variable
+Examine-Variable
+:COLLAPSED Change
+Ready Q
+Rearrange-Ready-Queue
+State
+Nextstate
+Create
+Create
+Stop
+Stop
+Input Port
+Rearrange-Input-Port
+Del Signal
+Remove-Signal-Instance
+Set Timer
+Set-Timer
+Reset Timer
+Reset-Timer
+Variable
+Assign-Value
+Send
+Output-Internal
+:COLLAPSED Show
+Next Symbol
+Show-Next-Symbol
+Prev Symbol
+Show-Previous-Symbol
+C Line
+Show-C-Line-Number
+Coverage
+Print-Coverage-Table
+:COLLAPSED Trace
+Set
+Set-Trace
+Level List
+List-Trace-Values
+Graph
+Set-GR-Trace
+Graph List
+List-GR-Trace-Values
+MSC
+Set-MSC-Trace
+MSC List
+List-MSC-Trace-Values
+Start MSC
+Start-Interactive-MSC-Log
+Stop MSC
+Stop-MSC-Log
+Batch MSC
+Start-Batch-MSC-Log
+:COLLAPSED Breakpoint
+Transition
+Breakpoint-Transition
+Output
+Breakpoint-Output
+Variable
+Breakpoint-Variable
+Symbol
+Breakpoint-At
+Remove
+Remove-Breakpoint
+List
+List-Breakpoints

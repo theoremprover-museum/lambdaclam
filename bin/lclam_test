@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# lclam_test query meth -timeout timeout
+#
+# Run lambdaclam on specified query. Time out after the process has
+# used a specified number of CPU seconds (default: don't time out).
+#
+
+query=$1
+meth=$2
+
+if [ $3 == '-timeout' ] ; then
+    ulimit -t $4
+fi
+
+# timeformat for bash's time built-in
+TIMEFORMAT=$'\nreal\t%2lR\nuser\t%2lU\nsys\t%2lS'
+
+time $LCLAM_HOME/bin/lclam  << EOF
+silent_mode.
+benchmark_plan test $meth $query.
+halt.
+EOF
+

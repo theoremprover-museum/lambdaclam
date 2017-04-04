@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Extract status from lclam .tex output file ($1) and print to standard
+# output a line with theorem name, proof status and time, and optional
+# comment ($2)
+
+comment=$2
+n=`basename $1 | sed  -e 's/_/\\\\_/g'`
+name=${n%.tex}
+tail -100 $1 > /tmp/lclam_report_tmp_$USER
+t=`grep -w ^user /tmp/lclam_report_tmp_$USER | sed -e 's/user//'`
+
+# has a plan been found?
+success_test="fgrep -q \"Plan Succeeded\" /tmp/lclam_report_tmp_$USER"
+
+# has the planner failed before timeout?
+fail_test="fgrep -q \"Failed\" /tmp/lclam_report_tmp_$USER"
+
+# if plan found, report name and timing
+{ eval $success_test && echo $name \& $t \& $comment \\\\ ; }      ||
+# if planning has exhausted all possibilities, report with timing
+{ eval $fail_test    && echo $name \& Fail $t \& $comment \\\\ ; } ||
+# otherwise planning has failed for some other reason
+{ echo $name \& N $t \& $comment \\\\ ; }
+

@@ -1,0 +1,50 @@
+Theory Nsa.
+Use Logic arithmetic.
+
+type real.
+type hyperreal.
+const z nat.
+const f nat->nat#bool.
+
+axiom sch2 [x:nat |- <x=x>].
+axiom sch3 [x:nat, y:nat |- <x=y>].
+axiom sch4 [x:nat, y:nat, <x=y> |- <y=x>].
+axiom ax1 [y:nat |- forall f:nat->nat. <f = (x:nat \ <f y>)>].
+axiom exax exists x:nat. <x=x>.
+axiom badax [true, x:nat |- <x=x>].
+
+conjecture conj1 [x:nat |- forall y:nat . <x=y>].
+inference inf1 [true |- false / true, x:nat |- <x=x>].
+
+axiom qs (forall x:nat. (exists y:nat. <x=y>)) => true.
+
+conjecture conj2 [x:hyperreal |- exists y:hyperreal . <x=y>].
+
+predicate even : nat.
+predicate close_to : hyperreal, real.
+
+inference easy_inf [true|-true; false|-false / x:nat |- <x=x>].
+
+axiom pred_in_prop even{z}.
+
+define type real_pair = real#real.
+
+define const n:nat#bool = <f z>.
+
+define const m:nat = z.
+
+axiom false_e [G1, false, G2 |- P].
+
+inference and_r [G |- A; G |- B / G |- A /\ B].
+
+inference and_l [G1,A,B,G2 |- P / G1, A /\B,G2 |- P].
+
+inference or_l [G,A |- P; G,B |- P / G, A\/B |- P].
+
+$ % marks eof
+%inference all_r [G, x:T |- P[x] / G |- forall x:T . P] 
+
+% Implicit quantification not allowed.
+axiom r1 true => (l = r).
+axiom r2 l = r.
+axiom sch [l = r |- r = l].

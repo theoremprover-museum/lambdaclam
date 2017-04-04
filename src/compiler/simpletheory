@@ -1,0 +1,7 @@
+Theory Nsa.
+Use Logic arithmetic.
+
+type real.
+type hyperreal.
+
+$

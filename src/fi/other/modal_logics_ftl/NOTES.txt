@@ -1,0 +1,70 @@
+---------------------------------------------------------------------
+This directory contains FTL (version for modal logics)
+Last update: October, 2002
+Compliant with School of Informatics Technical Report EDI-INF-RR-0150
+(http://www.informatics.ed.ac.uk/publications/report/0150.html)
+---------------------------------------------------------------------
+
+-------------------
+Module dependencies
+-------------------
+
+lists_          basic
+syntax_.sig     basic
+compound_tacs   accumulates lists_, syntax_
+frame           accumulates compound_tacs
+basic_tacs      accumulates compound_tacs; imports frame
+examples        accumulates syntax_
+ftl             accumulates basic_tacs, examples
+
+---------------------
+Proofs in the techrep
+---------------------
+
+**************** Figure 1, modal modus ponens in Cqk
+----> Proof found. Formula
+	box_ phi and_ box_ (phi imp_ psi) imp_ box_ psi at_ zero_
+----> is proved by tactic
+	then_tac (try_tac (pre trimp)) (then_tac (try_tac (pre tland)) (then_tac (try_tac (pre trbox)) (then_tac (try_tac (pre tlbox)) (pair_tac (then_tac (try_tac (pre tlbox)) (pair_tac (then_tac (try_tac (pre tlimp)) (pair_tac (pre2 tax) (pre2 tax))) (pre2 tax))) (pre2 tax)))))
+----> which generates proof
+	rimp 1 (land 1 (rbox 1 (W1\ lbox 2 (lbox 3 (limp 1 (ax 1 1) (ax 1 1)) (ax 2 1)) (ax 1 1))))
+
+**************** Figure 2, converse barcan formula in Cqk
+----> Proof found. Formula
+	box_ (all_ (x\ p x)) imp_ all_ (x\ box_ (p x)) at_ zero_
+----> is proved by tactic
+	then_tac (try_tac (pre trimp)) (then_tac (try_tac (pre trall)) (then_tac (try_tac (pre trbox)) (then_tac (try_tac (pre tlbox)) (pair_tac (then_tac (try_tac (pre tlall)) (pre2 tax)) (pre2 tax)))))
+----> which generates proof
+	rimp 1 (rall 1 (W1\ rbox 1 (W2\ lbox 2 (lall 1 (ax 1 1)) (ax 1 1))))
+
+**************** Figure 4, axiom 4 in Cqk U {trans}
+----> Proof found. Formula
+	box_ phi imp_ box_ (box_ phi) at_ zero_
+----> is proved by tactic
+	then_tac (try_tac (pre trimp)) (then_tac (try_tac (pre trbox)) (then_tac (try_tac (pre trbox)) (then_tac (try_tac (pre tlbox)) (pair_tac (pre2 tax) (then_tac (try_tac ttrans) (pair_tac (tax 2 1) (pair_tac (pre2 tax) (pre2 tax))))))))
+----> which generates proof
+	rimp 1 (rbox 1 (W1\ rbox 1 (W2\ lbox 3 (ax 1 1) (trans (ax 2 1) (ax 1 1) (ax 1 1)))))
+
+**************** Figure 5, axiom 2 in Cqk= U {refl,wconn}
+----> Proof found. Formula
+	dia_ (box_ phi) imp_ box_ (dia_ phi) at_ zero_
+----> is proved by tactic
+	then_tac (try_tac (pre trimp)) (then_tac (try_tac (pre tldia)) (then_tac (try_tac (pre trbox)) (then_tac (try_tac twconn) (pair_tac (tax 3 1) (pair_tac (tax 1 1) (pair_tac (then_tac (try_tac (pre trdia)) (pair_tac (then_tac (try_tac (pre tlbox)) (pair_tac (pre2 tax) (pre2 tax))) (then_tac (try_tac trefl) (pre2 tax)))) (pair_tac (then_tac (try_tac (pre tsubeq)) (then_tac (try_tac (pre trdia)) (pair_tac (then_tac (try_tac (pre tlbox)) (pair_tac (pre2 tax) (then_tac (try_tac trefl) (pre2 tax)))) (then_tac (try_tac trefl) (pre2 tax))))) (then_tac (try_tac (pre trdia)) (pair_tac (then_tac (try_tac (pre tlbox)) (pair_tac (pre2 tax) (then_tac (try_tac trefl) (pre2 tax)))) (pre2 tax))))))))))
+----> which generates proof
+	rimp 1 (ldia 1 (W1\ rbox 1 (W2\ wconn (ax 3 1) (ax 1 1) (rdia 1 (lbox 3 (ax 1 1) (ax 1 1)) (refl (ax 1 1))) (subeq 1 (rdia 1 (lbox 3 (ax 1 1) (refl (ax 1 1))) (refl (ax 1 1)))) (rdia 1 (lbox 3 (ax 1 1) (refl (ax 1 1))) (ax 1 1)))))
+
+**************** Figure 6, axiom 2 in C_{qs4.3}
+----> Proof found. Formula
+	dia_ (box_ phi) imp_ box_ (dia_ phi) at_ zero_
+----> is proved by tactic
+	then_tac (try_tac (pre trimp)) (then_tac (try_tac (pre tldia)) (then_tac (try_tac (pre trbox)) (then_tac (try_tac (pre tlbox)) (pair_tac (then_tac (try_tac (pre tlbox)) (pair_tac (then_tac (try_tac (pre trdia)) (pair_tac (tax 1 1) (then_tac (try_tac trefl) (pre2 tax)))) (then_tac (try_tac (pre trdia)) (pair_tac (pre2 tax) (then_tac (try_tac twconn) (pair_tac (tax 3 1) (pair_tac (tax 2 1) (pair_tac (tax 1 2) (pair_tac (then_tac (try_tac (pre tsubeq)) (then_tac (try_tac trefl) (pre2 tax))) (pre2 tax)))))))))) (then_tac (try_tac trefl) (pre2 tax))))))
+----> which generates proof
+	rimp 1 (ldia 1 (W1\ rbox 1 (W2\ lbox 2 (lbox 4 (rdia 1 (ax 1 1) (refl (ax 1 1))) (rdia 2 (ax 1 1) (wconn (ax 3 1) (ax 2 1) (ax 1 2) (subeq 1 (refl (ax 1 1))) (ax 1 1)))) (refl (ax 1 1)))))
+
+**************** Figure 7, axiom McK in C_{qs4.1} = C_{qk=} U {refl,trans,atom} (cfr. vanBenthem, Introduction)
+----> Proof found. Formula
+	box_ (dia_ phi) imp_ dia_ (box_ phi) at_ zero_
+----> is proved by tactic
+	then_tac (try_tac (pre trimp)) (then_tac (try_tac (pre trdia)) (pair_tac (then_tac (try_tac (pre trbox)) (then_tac (try_tac (pre tlbox)) (pair_tac (then_tac (try_tac (pre tldia)) (then_tac (try_tac tatom) (pair_tac (then_tac (try_tac tatom) (pair_tac (then_tac (try_tac (tsubeql 5 1)) (then_tac (try_tac (tsubeql 5 2)) (then_tac (try_tac (tsubeqr 1 4)) (then_tac (try_tac (tsubeq 2)) (then_tac (try_tac (tsubeq 4)) (pre2 tax)))))) (pre2 tax))) (pre2 tax)))) (then_tac (try_tac tatom) (pair_tac (pre2 tax) (pre2 tax)))))) (then_tac (try_tac tatom) (pair_tac (pre2 tax) (pre2 tax)))))
+----> which generates proof
+	rimp 1 (rdia 1 (rbox 1 (W1\ lbox 2 (ldia 1 (W2\ atom (atom (subeql 5 2 (subeqr 1 4 (subeq 2 (subeq 4 (ax 5 1))))) (ax 5 1)) (ax 4 1))) (atom (ax 1 1) (ax 1 2)))) (atom (ax 1 1) (ax 1 2)))

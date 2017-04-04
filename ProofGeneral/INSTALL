@@ -1,0 +1,203 @@
+Instructions for installing Proof General
+=========================================
+
+This file describes what to do to run Proof General.
+Please let us know if you have problems trying to install it.
+
+Unpack this distribution somewhere.  It will create a top-level
+directory containing Proof General, called Proof-General-<something>.
+Put this line in your .emacs file:
+
+    (load-file "<proofgeneral-home>/generic/proof-site.el")
+
+Where <proofgeneral-home> is replaced by the full path name to
+Proof-General-<something>.  If you prefer not to edit .emacs,
+you can use the script in bin/proofgeneral to launch Emacs with 
+Proof General loaded.
+
+The command above will set the Emacs load path and add auto-loads for
+the assistants below:
+
+  .v	    Coq files
+  .l	    LEGO files
+  .thy      Isabelle files
+  .ML       Isabelle files
+  .af2	    AF2 files
+  .sml	    HOL98 files
+  .elf	    Twelf files
+  .acl2	    ACL2 files
+
+When you load a file with one of these extensions, the corresponding
+Proof General mode will be entered.
+
+In case of difficulty, please check the documentation in doc/, the
+notes below, and the file BUGS.  If this doesn't help, then contact us
+via the address below.
+				- David Aspinall.
+
+   
+   Proof General maintainer <support@proofgeneral.org>
+   LFCS,
+   Division Of Informatics,
+   University of Edinburgh.
+   Edinburgh.
+   
+   http://www.proofgeneral.org
+
+
+
+----------------------------------------------------------------------
+
+Detailed installation Notes for Proof General
+=============================================
+
+
+RPM package.
+------------
+
+If you have the RPM file, this is the line you should add to your
+.emacs file:
+
+  (load-file "/usr/share/emacs/ProofGeneral/generic/proof-site.el")
+
+
+
+Running on Windows 95/98/NT
+---------------------------
+
+We recommend XEmacs compiled for Windows, see http://www.xemacs.org
+
+Unpack the Proof General tar or zip file, and rename the folder to
+"ProofGeneral" to remove the version number.  Put a line like this:
+
+   (load-file "c:\\ProofGeneral\\generic\\proof-site.el")
+
+into .emacs.  You should put .emacs in value of HOME if you set that,
+or else in directory you installled XEmacs in, e.g.  
+c:\Program Files\XEmacs\.emacs
+
+
+Dependency on Other Emacs Packages
+----------------------------------
+
+Proof General relies on several other Emacs packages, which are
+probably already supplied with your version of Emacs.  If not,
+you will need to find them.  Note that XEmacs is now being unbundled,
+so you may need to select packages (or package groups) specially.
+These are the packages that you need to use Proof General:
+
+ ESSENTIAL:
+  * cl-macs
+  * comint	
+  * custom
+  * font-lock
+
+ OPTIONAL:
+  * outline
+  * func-menu
+  * X Symbol	  [ XEmacs only; separate download ]
+
+
+
+Byte Compilation.
+-----------------
+
+Compilation of the Emacs lisp files improves efficiency but can
+sometimes cause compatibility problems.  It is not supported in this
+release.  If you want to experiment nonetheless, you can compile Proof
+General by typing 'make' in the directory where you installed it.
+This will result in lots of warnings and error messages most of which
+can be ignored. Check the Makefile sets EMACS to your Emacs
+executable.
+
+
+Site-wide Installation
+----------------------
+
+If you are installing Proof General site-wide, you can put the
+components in the standard directories of the filesystem if you
+prefer, providing the variables in proof-site.el are adjusted
+accordingly.  Make sure that the generic and assistant-specific elisp
+files are kept in subdirectories of proof-home so that the autoload
+directory calculations are correct.
+
+To save every user needing the line in their .emacs file, you can put
+that into a site-wide file like default.el.  Read the Emacs manual for
+details.
+
+
+Removing support for unwanted provers
+-------------------------------------
+
+You cannot run more than one instance of Proof General at a time:
+e.g. if you're using Coq, you won't be able to run LEGO scripts.
+
+If there are some assistants supported that you never want to use, 
+you can remove them from the variable `proof-assistants`  
+to prevent Proof General autoloading for files with particular
+extensions.  This may be useful if you want to use other modes for
+those files, for example, you may want sml-mode for .ML files or
+Verilog mode for .v files.
+
+The easiest way to do this (and other customization of Proof General)
+is via the Customize mechanism, see the menu:
+
+  Options -> Customize -> Emacs -> External -> Proof General
+
+or, after loading Proof General, in a proof script buffer
+
+  Proof-General -> Customize
+
+You may need extra customization depending on the proof assistant (for
+example, the name of the proof assistant binary).  See the menu
+
+  Proof-General -> Customize -> <Name of Assistant>
+
+and the notes below for more details.
+
+Notice that the customization mechanism is only available in
+Emacs 20.x and XEmacs.
+
+
+
+----------------------------------------------------------------------
+
+Notes for Coq
+=============
+
+Check the values of coq-tags and coq-prog-name in coq.el to see that
+they correspond to the paths for coqtop and the library on your system.
+
+Install coqtags in a standard place or add <proof-home>/coq to your PATH.
+NB: You may need to change the path to perl at the top of the file.
+
+If you are running Coq, generate a TAGS file for the library by running
+	coqtags `find . -name \*.v -print`
+in the root directory of the library, $COQTOP/theories.  If you are
+running LEGO, do the same using legotags in the appropriate directory.
+
+
+----------------------------------------------------------------------
+
+Notes for LEGO
+==============
+
+Install legotags in a standard place or add <proofgeneral-home>/lego 
+to your PATH.
+NB: You may need to change the path to perl at the top of the file.
+
+
+----------------------------------------------------------------------
+
+Notes for Isabelle and Isabelle/Isar
+====================================
+
+Check the value of isabelle-prog-name.
+
+If you use the interface wrapper scripts isa/interface or
+isar/interface, you may need to change the path to bash
+on the first line.
+
+The distribution includes a version of Isamode's theory file mode.
+Use C-h m to check on the features available.
+

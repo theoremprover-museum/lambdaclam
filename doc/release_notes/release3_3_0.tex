@@ -1,0 +1,136 @@
+\documentclass[11pt]{article}
+
+\begin{document}
+
+\title{$\lambda$-Clam v3.3.0: Release Note} 
+
+\author{James Brotherston}
+
+\date{July 16, 2002}
+
+\maketitle
+
+\section{New features with this release}
+
+\subsection{Ireland / Walsh generalisation critics (Dennis)}
+The files \texttt{whisky.\{mod,sig\}} contain work on the whisky
+problem; the same whisky problem and a couple of similar ones have
+gone into the benchmark set.  The set of sample theorems now includes
+all those in Andrew Ireland's critics paper.  Most of these were
+already in the corpus but the new ones can be found in
+\texttt{ireland\_critics.\{mod,sig\}}.  The goals are rather
+unhelpfully named icT6, icT7 etc. from the original paper.  
+
+The generalisation critic now attempts the "Walsh" critic first and
+then the "Ireland" critic.  Both of these critics have undergone some
+debugging.  
+
+\subsection{Two-variable induction (Dennis)}
+The ability to induct on two variables at once (if this is a better
+option) has been added.  For efficiency reasons, ripple analysis first
+tries to induct on only one variable and only looks at two variables
+if there are no unflawed schemes.  If there are no unflawed schemes on
+two variables it then checks three and so on, up to the number of
+forall quantifiers at the start of the conclusion of the goal.  There
+are now 9 more theorems from the old clam corpus that can be proved
+and these have been moved into the benchmark set.
+
+\subsection{Specialised rewriting methods (Brotherston)}
+Two new rewrite lists have been added: {\tt user\_lemma\_list} and
+{\tt user\_defn\_list}.  The top-level commands \texttt
+  {add\_to\_user\_\{lemma,defn\}\_list X}, \\
+\texttt {delete\_from\_user\_\{lemma,defn\}\_list X}, and \texttt
+  {set\_user\_\{lemma,defn\}\_list X} have been implemented; the
+members of list X must be declared as lemmas / definitions
+respectively in order for these commands to succeed.
+
+\noindent Correspondingly, two new methods have been added to {\tt
+  rewriting.\{mod,sig\}}:
+\begin{verbatim}
+deploy_lemma:  rewrite_rule -> meth
+unfold_defn:   rewrite_rule -> meth
+\end{verbatim}
+These consult the user\_lemma\_list / user\_defn\_list respectively
+and attempt to rewrite the goal once with some rule in the list.  The
+reasoning behind this separation is that unfolding a definition is
+typically something of a last resort, whereas it is generally
+desirable to use key lemmas at the first opportunity (although of
+course you can use the methods however you like).
+
+Two other rewrite rule constructs also exist in $\lambda$-Clam: {\tt
+  axiom} and {\tt hypothesis}.  Analogues of the rule lists and
+methods described above do not currently exist, but would be simple to
+implement if there is any demand.
+
+\subsection{Modal properties of processes (Brotherston)}
+The files {\tt
+  theories/ccs\_hmf\_\{syntax,methods,theory\}.\{mod,sig\}} contain
+work on a theory of properties of CCS processes expressed as modal
+formulas, based on Stirling's book ``Modal and Temporal Properties of
+Processes'' (Springer, 2001).  The theory is still at a
+work-in-progress stage, although it does contain 10 or so examples
+which plan successfully.
+
+\subsection{Claudio planner (Brotherston)}
+You can now have the plan bound to a meta-variable if you wish.  To do
+this, use the command: \\
+
+\verb+ claudio_plan method query Plan + \\
+or:  \verb+ claudio_iter_plan method query Plan + \\
+
+\noindent which invoke the standard PDS depth-first and iterative deepening
+planners respectively.  The variable Plan is of type
+\texttt{plan\_state} and is bound to the plan state at the end of
+execution.  Note that for Teyjus to remember the variable binding you
+have to write everything as one clause e.g. \\
+
+\verb+ claudio_plan top_meth mythm Plan, printstdout Plan.+
+
+\subsection{Improved output control (Brotherston)}
+$\lambda$-Clam now has three output verbosity modes which can be toggled using the commands: \\
+
+\verb+ verbose_mode. + / \verb+ silent_mode. + / \verb+ super_silent_mode. + \\
+
+\noindent 
+Verbose is the default output mode and prints all the planning
+information.  Silent mode suppresses failed method applications and
+backtracking (as before).  Super-silent mode also suppresses the
+printing of the goal (but not the address), which is very useful for
+debugging plans in which the goals become unmanageably large.  
+
+
+\section{Fixes and improvements to v3.2.0}
+
+\subsection{Rewrite list commands}
+All the top-level commands of the form {\tt add\_list\_to\_X} and {\tt
+  delete\_list\_from\_X} have been renamed to {\tt add\_to\_X} and
+{\tt delete\_from\_X}.  The old versions of {\tt add\_to\_X} and {\tt
+  delete\_from\_X} (which added and deleted single items) no longer
+exist, so all manipulation of rewrite rule lists is done in a
+consistent way.  For example:
+\begin{verbatim}
+add_to_sym_eval_list [myrewrite].
+add_to_sym_eval_list [rule1,rule2,rule3].
+delete_from_sym_eval_list [rule2].
+\end{verbatim}
+
+\subsection{MATHWEB setup \& documentation (Zimmer)}
+The manual now contains a revised chapter on how to set up and use the
+MATHWEB connection in $\lambda$-Clam.  
+
+\subsection{Mutual induction module (Brotherston / Smaill)}
+The module \texttt{theories/mutual\_induction.mod} is now finished and
+contains custom methods designed to apply the mutual induction scheme
+used by the MFOTL group at Liverpool.  For a full description of the
+induction scheme and the associated methods, please consult section
+7.6 of the $\lambda$-Clam manual.
+
+\subsection{Rewriting fix (Maclean)}
+The main rewriting predicate has been changed to take proper account
+of the direction of rewrite rules.
+
+\section{Contact}
+The main $\lambda$-Clam developer is James Brotherston, email:
+jjb@dai.ed.ac.uk or telephone: +44 (0)131-650-2721.
+
+\end{document}

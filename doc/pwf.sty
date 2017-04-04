@@ -1,0 +1,46 @@
+% improved macros for setting potential wave-fronts
+% img/mrg/jun-93 (img@ai.ed.ac.uk)
+% bug fixed; added pwfout and pwf in 10-june-94/img
+% bug fix: I was using \newcount rather than \countdef img/mrg/jan-95
+%  extra braces delimit scope and so prevent trampling over 10,11 and 10
+\newcommand{\pwf}[1]{{\countdef\tx=10
+                     \countdef\ty=11
+                     \dimendef\drop=10
+        \setbox0\hbox{$#1$}\drop=\dp0
+        \setbox0\hbox{\hskip\fboxsep\vbox{\vskip\fboxsep
+                \box0\vskip\fboxsep}\hskip\fboxsep}\tx=\wd0
+        \ty=\ht0 \advance\ty by \dp0 % Y size
+        \divide \tx \unitlength      % number of units X
+        \divide \ty  \unitlength     % number of units Y
+        \ifodd\tx \advance \tx by 1\fi % for better results (see LaTeX manual)
+        \ifodd\ty \advance \ty by 1\fi
+        \advance\drop by \fboxsep
+        \setbox1=\hbox{\dashbox{2}(\tx,\ty){\copy0}}\hbox{\lower\drop\box1}}}
+
+\newcommand{\pwfout}[1]{\pwf{#1}^\uparrow}
+\newcommand{\pwfin}[1]{\pwf{#1}^\downarrow}
+\endinput
+% 
+% % a symmetric dashed line with #1 dashes of length #2, dashlen #3
+% \def\dashline#1#2#3{\newcount\Number \Number=#1 %
+% 	\hbox{\loop\ifnum\Number > 0
+% 		\vrule height\fboxrule width#2 depth0pt
+% 		\ifnum\Number > 1 \hskip #3\fi
+% 		\advance\Number by -1
+% 		\repeat}}
+% 
+% 
+% % and some for setting potential holes
+% % img/mrg/17-feb-94 (img@ai.ed.ac.uk)
+% \newcommand{\ph}[1]{{\countdef\tx=10
+%                      \countdef\ty=11
+%                      \dimendef\drop=10
+% 	\setbox0\hbox{$#1$}\drop=\dp0\tx=\wd0
+% 	\tmp=1pt
+% 	\typeout{\the\tx}\typeout{\the\tmp}
+%  	\divide \tx by \tmp
+% 	\typeout{\the\tx}
+%  	\ifodd\tx \advance \tx by 1\fi
+%  	\advance \drop by \fboxsep
+%  	\setbox0=\hbox{\vbox{\box0\vskip2pt\dashline{\tx}{0.1pt}{0.2pt}}}
+% 	\hbox{\box0}}}

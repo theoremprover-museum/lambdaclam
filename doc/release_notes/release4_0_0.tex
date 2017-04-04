@@ -1,0 +1,60 @@
+\documentclass[11pt]{article}
+
+\begin{document}
+
+\title{$\lambda$-Clam v4.0.0: Release Note} 
+
+\author{James Brotherston}
+
+\date{August 26, 2002}
+
+\maketitle
+
+\section{New features with this release}
+
+\subsection{New system structure (Brotherston)}
+
+The $\lambda$-Clam module structure has been entirely revamped for
+this release, so that the various system components are separated out
+from each other and the code is more efficient.  These changes should
+be transparent to users writing their own theories; for developers,
+schematics of the new module structure are in chapter 10 of the manual
+(or see BBN 1436).  Some problems with the Teyjus abstract machine
+have also been fixed as a result of these changes.
+
+\subsection{QED command (Brotherston)}
+Taking inspiration from the Isabelle theorem prover, we have
+implemented a $\lambda$-Clam version of Isabelle's {\tt qed} command, which
+converts a proven goal to a rewrite rule which can then be used in
+future proofs.  The command syntax is: {\tt qed \{fwd,bwd\} [goal].}
+The first argument is used to indicate whether the lemma is to be used
+for forward or backward reasoning, and affects the polarity of the
+rewrite rule generated.  The second argument is the goal to be used in
+generating the rewrite rule.  The name of the rewrite rule generated
+by {\tt qed fwd mygoal} is {\tt user\_rewrite(``mygoal\_fwd'')} (and
+similarly for {\tt qed bwd}).
+
+Unlike the Isabelle version, $\lambda$-Clam's {\tt qed} does \emph{not}
+require a goal to have been proven before a rewrite can be generated
+from it.  This is in order to allow users to perform `rapid
+prototyping' of large proofs, deferring the proofs of sub-lemmas until
+later in the development.
+
+For more information on {\tt qed} see chapter 4 of the manual, or
+refer to BBN 1433.
+
+\subsection{GS decision procedures (Janicic)}
+The {\tt src/gs} directory contains a $\lambda$-Clam implementation
+of the GS framework for combining and augmenting decision procedures.
+Documentation for this system is in {\tt doc/lgs-tr.ps}.
+
+\subsection{Miscellaneous}
+A problem has been fixed which was causing variables in method
+continuations to become unified across goal conjunctions.  A few other
+minor fixes have also been made.
+
+\section{Contact}
+The main $\lambda$-Clam developer is James Brotherston, email:
+jjb@dai.ed.ac.uk or telephone: +44 (0)131-650-2721.
+
+\end{document}

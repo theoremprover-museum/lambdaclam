@@ -1,0 +1,74 @@
+\chapter{Introduction}
+
+This manual describes the \lclam\ proof planner\index{proof planner}.
+
+Proof planning, first conceived by Bundy \cite{pub349} attempts to
+capture common structure in proofs through the development of
+\emph{proof plans}, which are proofs represented at some level of
+abstraction --- usually above the level of inference rules, but not
+necessarily so\footnote{If not, then the proof plan is in fact a
+  \emph{bona fide} proof.}.  The proof plan is typically generated
+using AI-style planning techniques and represented as a tree.  The
+planning operators used by the proof planner are known as
+\emph{methods}; these are somewhat akin to tactics in a traditional
+theorem prover, except that they are generally intended to encapsulate
+chunks of `human' mathematical reasoning rather than individual
+inference rules.  For these reasons, methods are often referred to as
+``partial tactic specifications''.  Methods can be either atomic or
+compound.  An atomic method is defined by its pre- and postconditions
+which partially describe (in some meta-language) the proof state
+before and after the application of the method; a method will only be
+applied if its preconditions are satisfied, and will enforce its
+postconditions on successful application.  A compound method is built
+up from atomic methods using combinators called \emph{methodicals}
+(which are analogous to LCF-style tacticals), allowing the user to
+build up more complex proof strategies and heuristics.
+
+In the original proof planning paradigm, each method has a tactic
+attached to it which when executed produces the corresponding part of
+the object level proof.  The use of pre- and postconditions allows
+methods to be (potentially) more expressive than tactics alone, so
+that a method can sensibly be thought of as ``guarantee +
+explanation'', with the tactic component providing the guarantee
+component and an explanation provided by the high-level pre- and
+postconditions.  However, \lclam\, currently has no theorem prover
+attached to it, and hence no tactics attached to its methods, leaving
+considerations of soundness squarely in the hands of the method
+writer\footnote{The {\sc Omega}\index{OMEGA} proof
+  planner~\cite{omega} allows the tactics justifying nodes to be
+  further proof plans hence the process of executing the plan can be
+  performed iteratively giving proofs at lower and lower levels of
+  abstraction until it grounds out in the object-logic (a natural
+  deduction style sequent calculus).}.  Another important feature of
+proof planning is the use of \emph{critics} --- planning operators
+which respond to various types of planning failure by attempting to
+`patch' a proof attempt, for example by generalising the conjecture to
+be proved.  All of these ideas will be explored in further detail
+later in this manual.
+
+\lclam\,is the latest in a series of proof planners developed by the
+Mathematical Reasoning Group at the University of Edinburgh.  Unlike
+its predecessors, the CLAM series, it supports proof planning over
+higher-order domains, since the underlying implementation language
+Teyjus (an implementation of $\lambda$Prolog\footnote{http://www.cse.psu.edu/$\sim$dale/lProlog/}\index{\lprolog\}) incorporates many useful
+higher-order features such as HO unification, automatic
+$\beta$-reduction and explicit language constructs for existential and
+universal quantification over terms.  The built-in methods of \lclam\,
+are specifically tailored to induction proofs, and the system has
+successfully been used to plan proofs in, amongst other domains,
+ordinal arithmetic \cite{DennisSmaill:TPHOLS01}, nonstandard analysis
+\cite{Maclean02}, and synthesis of logic programs \cite{Lacey:00}.
+  
+Further technical details can be found in the Implementation Taskforce
+note series. Background motivation can be found in
+\cite{Richardson+98}. Some of this information, and other resources,
+can be found on the \lclam\ web page at:
+
+\begin{center}
+\verb|http://dream.dai.ed.ac.uk/systems/lambda-clam/|.
+\end{center}
+
+Both this document and the \lclam\ system are under development.
+Throughout the text you will find comments and suggestions for
+improvements and additions indicated by {\em italics}.
+

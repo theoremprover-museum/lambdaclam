@@ -1,0 +1,69 @@
+#!/usr/local/bin/wish8.0 -f
+
+# ####################################
+# XBARNACLE EXECUTABLE START-UP SCRIPT
+# ####################################
+
+# delete the toplevel window during startup
+wm withdraw .
+
+# Set up a listening server on a socket.
+
+#set Hostname [exec uname -n].dai.ed.ac.uk
+set Hostname {"127.0.0.1"}
+
+set Port 0
+puts stdout "Connecting XBarnacle to a free port"
+
+# The Tcl/Tk socket command takes the name of a procedure that will be
+# called when LambdaCLaM connects to the socket.
+
+# Call start_up which sources all the other files
+source $env(LCLAM_GUI_DIR)/start_up.tcl
+
+# most of the variables are set in var.tcl
+puts "initialising variables"
+var_initialise_variables
+
+set Fid [socket -server connected $Port]
+set Port [lindex [fconfigure $Fid -sockname] 2]
+puts stdout "X-Barnacle listening on port $Port - Channel $Fid" 
+puts stdout "Invoking LambdaCLaM"
+# Start-up LambdaCLaM
+#exec $env(LCLAM_BIN_DIR)/lclam -PM_overflow 100000000 -s $Machine $Port &
+#exec /hame/gordon/projects/lxb/c/experiments/client $Machine $Port &
+exec tjsim --solve "xb $Hostname $Port." tjxb &
+puts stdout "Waiting for LambdaCLaM"
+
+# Block operation until the value of global variable Waited is
+# altered. This will happen when the connected procedure is called.
+
+vwait Waited
+puts stdout "LambdaCLaM and XBarnacle are connected"
+
+gui_xbarnacle_initialise
+
+# The first invocation of the following loop 
+# calls the procedure xbarnacle from lambda-clam. 
+# That used to carry out all initialisation, 
+# and procedure declarations now it just prints
+# a message.
+# :Gordon
+
+
+
+# Execute all incoming commands.
+
+set cmd [read_a_command $Commport]
+while {$cmd != "exit"} {
+  # Evaluate command and pass result down the socket.
+  puts $Commport "'[eval $cmd]'."
+  update
+  flush $Commport
+  # Retrieve another command.
+  set cmd [read_a_command $Commport]
+}
+
+close $Commport
+close $Fid
+exit

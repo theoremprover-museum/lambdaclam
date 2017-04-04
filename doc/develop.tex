@@ -1,0 +1,1949 @@
+\chapter{Developing \lclam\ }
+\label{developer}
+
+\section{Introduction}
+This chapter is intended mainly for the primary developer(s) of
+\lclam\ .  It contains information on the system architecture of the
+current version (v4.0.0) of \lclam\ , an discussion of the core
+planning modules, an overview of the contents of the theory library,
+and lastly some information on benchmarking.
+
+This chapter may seem a little disjointed , having been written by two
+different developers at different times.  In particular, section 10.2
+on the \lclam\ architecture was written by James Brotherston (Aug 2001
+-- Oct 2002); the rest is mostly due to Louise Dennis (Aug 1999 -- Aug
+2001) but has been updated.
+
+\section{\lclam v4 schematics}
+
+\subsection{The Teyjus module system}
+
+It is important to understand the meanings of the various types of arc
+in the schematic diagrams we present, since they correspond to rather
+different types of module accumulation in Teyjus.
+
+Dotted lines correspond to \emph{signature extension}.  In other
+words, if there is a dotted arc from M2 upwards to M1, then in the
+signature of M1 we have {\tt accum\_sig M2.}  Thus all the predicates
+and constants declared in the signature of M2 are ``pasted'' into the
+signature of M1, and therefore are visible to other modules that accumulate
+M1.  However, the actual predicate definitions in M2 (if any) are
+\emph{not} accumulated into M1.  This may seem strange, but in most
+cases we do this to avoid the situation where the same predicate
+definitions are accumulated more than once into a higher-level module.
+In that situation, those predicates start to succeed once for each
+copy of the definition accumulated --- which is not desirable.  We
+therefore import the signature only, in order to avoid type errors,
+and make sure that the code for each module is accumulated only once.
+
+Solid lines correspond to \emph{global accumulation} of modules --- if
+there is a solid line upwards from M2 to M1, then in the body of M1 we
+have {\tt accumulate M2} and in the signature of M1 we have
+{\tt accum\_sig M2}.  So in this case, as with signature extension, all
+the declarations in the signature of M2 are visible in M1 and outwards
+from it, but the predicate definitions of M2 are now also present in
+M1 and visible outwards from it.
+
+Lastly, dashed lines correspond to \emph{local accumulation} of
+modules, with the possibility of partial outwards visibility.  If
+there is a dashed line upwards from M2 to M1 then in the body of M1 we
+have both {\tt accumulate M2} and {\tt accum\_sig M2}.  No mention of
+M2 is made in the \emph{signature} of M1, however.  Doing this treats
+all the declarations and definitions in M2 as local to M1, and thus
+not visible to modules that accumulate M1.  However, we can allow a
+part of the signature of M2 to percolate outwards by repeating the
+relevant part of M2's signature in the signature of M1.  Then those
+declarations and any associated predicate definitions are visible to
+modules that accumulate M1.  Local accumulation is thus useful when we
+wish to conceal module code from higher-level modules.
+
+We now proceed to present the schematics for \lclam v4, along with
+brief descriptions of the component modules.
+
+\subsection{Syntax and utilties (Fig. 1)}
+
+\begin{figure}
+\begin{center}
+\epsffile{lclamv4_syntax.eps}
+\end{center}
+\caption{\lclam\ syntax declarations and utility functions}
+\end{figure}
+
+\begin{description}
+  
+\item[lclam\_list] All the usual list utilities including member,
+  append and so on.
+\item[lclam\_map] Map utility predicates.
+\item[lclam\_utils] Utility supermodule which includes the list and
+  map predicates, plus miscellaneous utilities such as findall.
+\item[basic\_types] Declarations for the most fundamental types in
+  \lclam\ such as methods, goals, plan states and so on.
+\item[rewrite\_types] Declarations for types and predicates used in rewriting.
+\item[ripple\_types] Declarations for types and predicates used to support rippling.
+\item[method] Basic method predicates atomic and compound, plus
+  declarations for the various methodicals.
+\item[goal] Declarations for the various goal constructors, plus a
+  couple of utility functions on goals.
+\item[syntax] Declarations for the constructors of osyn, which is the
+  metalanguage used for goals in \lclam, plus utility functions for
+  typechecking etc.
+\item[plan] Constructors for plan states plus utility functions on plans.  
+\item[critics] Basic critics plus declarations for the criticals.
+\item[lclam\_syntax] Syntax / utility supermodule which includes all
+  of the modules above, plus predicates for querying the various
+  rewrite rule lists.
+\end{description}
+
+\subsection{Pretty printer (Fig. 2)}
+
+\begin{figure}
+\begin{center}
+\epsffile{lclamv4_printer.eps}
+\end{center}
+\caption{The \lclam\ pretty printer}
+\end{figure}
+
+\begin{description}
+  
+\item[pretty\_print] Declarations for the pretty-printing markup
+  syntax, plus predicates for pretty-printing primitives.
+\item[prettify] Predicates for marking up various syntax expressions for the pretty printer.
+\item[interaction] Various output mode switches for controlling how an expression is printed.
+\item[print\_syntax] Predicates for pretty-printing terms, goals, methods etc.
+\item[print\_open\_math] Predicates for pretty-printing OpenMath terms.
+\item[print\_plan] Predicates for pretty-printing plans.
+\item[pretty\_printer] Interface for the pretty-printer.  Notice that
+  the other pretty-printing modules are locally accumulated into this
+  module, allowing careful control over which printing predicates are
+  visible to higher modules.
+\end{description}
+
+\subsection{Planner core (Fig. 3)}
+
+\begin{figure}
+\begin{center}
+\epsffile{lclamv4_planner.eps}
+\end{center}
+\caption{The \lclam\ planner core}
+\end{figure}
+
+\begin{description}
+
+\item[switch] Declarations for various switches which affect planner operation.
+\item[plan\_support] Predicates for manipulating the agenda and for
+  tidying method continuations.
+\item[pds\_support] Most of the important planning predicates are in
+  this module, including the predicates for applying methods and
+  critics, and for transforming compound methods into a first method
+  and continuation.
+\item[pds\_planner] Main predicates for the Partial Data Structure planner, in depth-first and iterative deepening flavours.
+\item[part\_plan] Main predicates for a partial planner.
+\item[planner] Planner interface, including wrappers for calling the
+  various planners.  The actual code for the syntax and pretty-printer
+  supermodules is accumulated into this module.  Notice that the other
+  planner modules are accumulated locally, ensuring that the planners
+  can only be called via the interface provided by this module.
+\end{description}
+
+\subsection{Core theories (Fig. 4)}
+
+\begin{figure}
+\begin{center}
+\epsffile{lclamv4_theories.eps}
+\end{center}
+\caption{The \lclam\ theory core}
+\end{figure}
+
+\begin{description}
+  
+\item[logic\_eq\_constants] Declarations for logic constants and
+  logical methods needed for the higher core theories.
+\item[pairs] Declaration and syntactic sugar for pairing type.
+\item[generalise] Generalisation method and supporting predicates.
+\item[embed] Support for embeddings.
+\item[rewriting] Generic rewriting methods and supporting predicates.
+\item[casesplit] Support for case-splitting.
+\item[wave] Support for rippling, including atomic wave methods.
+\item[schemes] Support for induction schemes, including ripple analysis.
+\item[induction] Methods for induction and supporting predicates.
+\item[wave\_critics] Supermodule for the core theories of \lclam\ with
+  the usual control over the interface in order to hide the internal
+  supporting predicates.
+\end{description}
+
+\subsection{Top-level interface (Fig. 5)}
+
+\begin{figure}
+\begin{center}
+\epsffile{lclamv4_top.eps}
+\caption{The top level of \lclam}
+\end{center}
+\end{figure}
+
+\begin{description}
+
+\item[theory\_db] Predicates for querying the \lclam\ theory database.
+\item[lclam] Top-level module which accumulates the theory core and
+  the planner and contains all of the various user commands.
+
+\end{description}
+
+
+
+
+\section{The Proof Planning Core}
+This section goes through the files in the core proof planning making
+notes on anything of interest in those files.  Much of the following
+will make little sense unless you have the code to hand to refer to.
+
+\subsection{Planner}
+The ``top'' module of the core proof planner is {\tt planner.mod}/{\tt
+  planner.sig}\index{planner.mod}\index{planner.sig}.  The planner is
+supposed to provide a generic top level predicate for applying any
+proof planner built into the system to any goal --- which is what {\tt
+  plan\_this}\index{plan\_this} does.  So {\tt plan\_this} takes as
+arguments a proof planner predicate\index{proof planner predicate}, a
+method\index{method}, a goal\index{query} and what is called an {\em
+  agenda predicate}\index{agenda predicate} which is supposed to
+define a search strategy\index{search strategy}.  The idea is that
+{\tt plan\_this} applies the proof planner to the given goal using the
+given method and search strategy.  In practice \lclam\ has two proof
+planners; the PDS planner (in {\tt pds\_planner.mod}, in iterative
+deepening and ``Claudio'' varieties), and a partial planner (in {\tt
+  part\_plan.mod}), and only one agenda strategy which is the
+depth-first\index{depth first} strategy.  (However, it should be no
+problem to code up other stratgeies if required.)  In order to speed
+up and facilitate use of the system we have wrappers for the various
+planners in {\tt planner.mod} which call {\tt plan\_this} with the
+appropriate planner and strategy.
+
+\begin{verbatim}
+plan_this Proof_planner Method Query AgendaPredicate:-
+        top_goal _ Query  Hyps Osyn, !,
+        announce_start Query Osyn,
+        Proof_planner (pstate (active_agenda [nil]) 
+          (and_node (seqGoal (Hyps >>> Osyn))
+                     nil
+                     open_status
+                     Method
+                     nomethodyet
+                     []
+                     []
+                     notacticyet
+                     []))
+          AgendaPredicate
+          Plan, !,
+        ((Plan = (pstate _ VerbosePlan), !, pprint_plan VerbosePlan);
+        (Plan = (cpstate _ CPlan), pprint_cplan CPlan)),
+        announce_end, !.
+\end{verbatim}
+{\tt announce\_start}\index{announce\_start} and {\tt
+  announce\_end}\index{announce\_end} just print out information at
+the start and end of planning.  {\tt top\_goal}\index{top\_goal}
+retrieves the actual sequent ({\tt Osyn}) which must be proved.  The
+proof planner {\tt Proof\_planner} to an empty agenda {\tt (pstate
+  (active\_agenda [nil]))}\index{pstate}\index{active\_agenda}, an
+initial {\tt and\_node}\index{and\_node} of a plan (notice this has
+lots of empty slots because nothing has happened yet), and the agenda
+predicate\index{agenda predicate}, getting back a {\tt Plan} as
+output.  There is then a disjunction on how the plan should be
+treated.  If the plan is a {\tt pstate}\index{pstate} then it is
+verbose (i.e. it contains all the plan information) otherwise it has
+been stripped down and contains just method and goal information ({\tt
+  cpstate}\index{cpstate}).  This is because full plans were difficult
+to read and took up too much memory.  (Hopefully somebody will
+implement some decent pretty printing for plans soon).
+
+\subsection{pds\_planner}
+So what does the PDS planner\index{PDS planner} actually do?  The
+predicate {\tt pds\_planner} actually just passes everything on to
+{\tt context\_planner}\index{context\_planner} adding an {\em
+  action}\index{action} and asserting the first node in the plan ({\tt
+  pplan\_node}\index{pplan\_node}).
+
+The heart of this planner is the clause
+\begin{verbatim}
+context_planner ActionIn Agenda AgendaPredicate PSOut:-
+        context_plan_step ActionIn ActionOut Agenda AgendaOut NewNodes,
+        %% AgendaOut is containd in ActionOut
+        create_agenda ActionOut (pliststate AgendaOut NewNodes) 
+                AgendaPredicate (pliststate NewAgenda NewNewNodes),
+        context_planner_nodes ActionOut NewNewNodes NewAgenda AgendaPredicate PSOut.
+\end{verbatim}
+The predicate {\tt context\_plan\_step}\index{context\_plan\_step}
+performs one planning step.  This takes the current
+agenda\index{agenda} and action\index{action} and applies the action
+appropriately to the agenda (the action tells the planner whether to
+apply a method or a critic) and returns a new action and agenda as a
+result.  The reason the {\tt context\_plan\_step} predicate can alter
+the agenda is in the case of critics\index{critic} etc. where it may
+want to delete nodes from the agenda.  It also returns a list of the
+nodes in the plan that have been altered as a result of the action.
+{\tt create\_agenda}\index{create\_agenda} uses the new agenda, the
+list of changed nodes and the agenda predicate to create a further new
+agenda.  For example, in depth-first planning\index{depth-first} it
+would put any new nodes on the front of the agenda while in
+breadth-first planning it would put them at the end.  Note that this
+just handles the order in which subgoals are treated.  There is also a
+question about handling different outcomes for method application on a
+given subgoal.  The planner then recurses.  There are extra clauses in
+{\tt context\_plan\_step} apart from the base case.  These are
+attempts to deal with cuts which have never worked satisfactorily.
+
+This planner (and its name) require some explanation.  The first pass
+at implementing a partial data structure planner\index{pds planner} in
+Teyjus resulted in an algorithm that was immensely space
+hungry\index{memory}.  The planner failed to find plans for the
+associativity of append\index{associativity of append}, exceeding of
+the simulator's allowed heap size\index{heap size} of 120 Megabytes.
+
+While the memory\index{memory} needed by the planner was not so large
+or so catastrophic in the Mali version of \lclam, it was of concern.
+Jeremy Gow had processes that were taking up as much as a gigabyte and
+there were a couple of theorems we were failing to plan for supposed
+space reasons (though this was never satisfactorily proved).
+
+An alternative way of communicating plan information within the
+program has been devised which seems to have substantially solved the
+space problems in \lclam.
+
+\noindent {\bf \lprolog's {\tt =>} Symbol\index{{\tt =>}}} \\
+
+\lprolog\ does not contain the {\tt assert}\index{assert} and {\tt
+  retract}\index{retract} predicates which allowed Prolog programmers
+to essentially modify the predicates (and hence data) of their program
+dynamically at run time.  Instead \lprolog\ achieves this using {\tt
+  =>}\index{{\tt =>}}, which has roughly the same semantics as
+implication.  Below a simplified section of \lclam's top level loop is
+shown.  {\tt lclam}\index{lclam} is the predicate that controls the
+loop.  It waits for an input from the user and then executes the
+command they have given.  In this case the user has specified that a
+new piece of syntax is to be used in future proof attempts.  \lclam\ is
+most interested in the type of syntax (especially in the
+generalisation method) and refers to a predicate {\tt
+  has\_otype}\index{has\_otype} when it needs to use this.  The code
+fragment below shows what happens when the user wants to dynamically
+add a piece of syntax.  Essentially the program just returns to the
+{\tt lclam} loop, but this time there is an extra clause of {\tt
+  has\_otype} added using {\tt =>}.
+
+\begin{verbatim}
+execute_command (add_osyn Syntax Type):-
+        (has_otype Syntax Type) => lclam.
+\end{verbatim}\index{execute\_command}
+
+The scope of this implication is the right hand side, i.e. just the
+execution of the predicate {\tt lclam}. So in:
+\begin{verbatim}
+execute_command (add_osyn Syntax Type):-
+        ((has_otype Syntax Type) => lclam),
+        has_otype Syntax Type.
+\end{verbatim}\index{execute\_command}
+the second {\tt has\_otype Syntax Type}\index{has\_otype} will fail
+because it's outside the scope of the {\tt =>}\index{{\tt =>}}
+expression.
+
+{\tt =>}\index{{\tt =>}} is used to ``assert'' the nodes in the plan
+as they were generated rather than passing the partial plan around
+internally.  This had a dramatic effect on the size\index{memory} of
+the process --- reducing attempts that had easily topped 100 Megabytes
+to under 10 Megabytes.
+
+\noindent{\bf Implementation Details} \\
+
+Plan nodes\index{plan!node} are stored as an address and a plan using
+the predicate {\tt pplan\_node}\index{pplan\_node}.  By default all
+addresses have an empty plan\index{empty plan} associated with them
+unless stated otherwise.  Plans are retrieved using {\tt
+  retrieve\_node}\index{retrieve\_node}.  This dual structure is used
+so that only the most recently stored plan for an address is retrieved
+-- this is done with a cut in {\tt retrieve\_node}.
+
+Since nodes can also be quantified there are similar predicates for
+storing and retrieving the bindings of the quantified variables  (do I 
+mean bindings?  I think maybe I mean instantiations).
+
+\begin{verbatim}
+local nobinder osyn.
+
+%% support for context
+pplan_node _ emptyPlan.
+retrieve_node Address Plan:-
+        pplan_node Address P, !,
+        %% delay unification until after the cut to make sure _only_ the
+        %% last plan node succeeds
+        (Plan = P).
+
+address_binder _ nobinder.
+retrieve_binder Address Binder:-
+        address_binder Address B, !,
+        (Binder = B).
+\end{verbatim}
+
+
+{\bf The Planning Algorithm} The basic planning algorithm\footnote{NB.
+  The actual code is unfortunately rather more complex than this} is:
+
+\begin{verbatim}
+context_planner Agenda Out:-
+        context_plan_step Agenda AgendaOut NewNodes,
+        create_agenda AgendaOut NewNodes NewAgenda NewNewNodes,
+        context_planner_nodes NewNewNodes NewAgenda Out.
+\end{verbatim}
+
+{\tt context\_plan\_step}\index{context\_plan\_step} applies a method
+to the first node in the {\tt Agenda}\index{agenda} and returns a list
+of child nodes\index{child node}.  A new agenda is then created (users
+may intervene at this point) and then planning continues.  {\tt
+  build\_child\_nodes}\index{build\_child\_nodes} handles the addition
+of the new nodes to the context.
+
+\begin{verbatim}
+
+%%%  "Asserting" the new nodes
+context_planner_nodes nil Agenda Out:-
+        context_planner Agenda Out. 
+\end{verbatim}\index{build\_child\_nodes}\index{context\_planner\_nodes}
+If there are no new nodes carry on planning.
+
+\begin{verbatim}
+context_planner_nodes ((add_node Ad (and_node ...)::T)) A Out:-
+        ((pplan_node Ad (and_node ...)) => 
+                context_planner_nodes T A Out).
+\end{verbatim}\index{build\_child\_nodes}\index{pplan\_node}
+If an ordinary node is to be added to the tree, add it to the context
+and continue.  NB.  I've obscured a lot of the content of {\tt
+  and\_node}s\index{and\_node} here.
+
+\begin{verbatim}
+context_planner_nodes ((add_node Ad (forall_node Ad Type AtoPlan))::T) A Out:-
+        pi x\ (
+        all_add_nodes (AtoPlan x) (NewN x),
+        append (NewN x) T (NT x),
+                ((pplan_node Ad (forall_node Ad Type AtoPlan)) => 
+                  ((address_binder Ad x) =>
+                        context_planner_nodes (NT x) A Out))).
+\end{verbatim}\index{build\_child\_nodes}\index{all\_add\_nodes}\index{pplan\_node}\index{address\_binder}
+
+For a universally quantified node a new constant {\tt x} is introduced
+and substituted into {\tt AtoPlan} to create a list of nodes, all of
+which are marked as nodes to be added.  The {\tt
+  forall\_node}\index{forall\_node} is stored, as is the constant that
+was introduced.  The case for existentially quantified nodes is very
+similar except a variable is used instead of a new constant.  The
+stored binder is only used when reconstructing the plan at the very
+end to make sure the correct constant is abstracted away from the
+children of the node.
+
+\begin{verbatim}
+context_planner_nodes ((delete_node Ad)::T) A Out:-
+        ((pplan_node Ad emptyPlan =>
+                context_planner_nodes T A Out)).
+\end{verbatim}\index{build\_child\_nodes}\index{pplan\_node}\index{emptyPlan}\index{delete\_node}
+Lastly if a node is marked for deletion (if for instance a critic has
+been invoked) then the empty plan is stored once more at that address.
+
+Once stored, plan nodes are accessed using {\tt
+  retrieve\_node}\index{retrieve\_node} when they are extended by a
+method or critiqued.
+
+\noindent {\bf Performance} 
+
+No coherent performance testing has been carried out, but a couple of
+figures are available at time of writing {\em NB. this was in August
+  2001 and these figures are almost certainly no longer accurate -
+  JB}.  The associativity of plus\index{associativity of plus} plans
+in under 6000 K in the new Teyjus version of \lclam, when the data
+structure was passed round this plan took over 40 M.  The Mali version
+of \lclam\ passed the data structure as an argument but did so less
+than the current version (the planner recursed under the plan step
+rather than after the plan step) and, of course, memory management was
+one of Mali's big things.  In Mali the associativity of plus takes up
+7320 K.
+
+This makes the new Teyjus version and the Mali version appear largely
+equivalent in terms of space.  However if we look at a large plan such
+as that for {\tt expplus}\index{expplus}, $X^{Y + Z} = X^Y * X^Z$,
+then the Mali version takes up 85 M while the Teyjus version takes 19
+M.  Better still most of that space is taken up when Teyjus constructs
+the plan data structure for printing out once the plan is found, up
+until that point the process is under 8512 K in size.  The actual plan
+output is 267 K in size (give or take).
+
+Theorems like {\tt exptimes}\index{exptimes}, $X^{Y^Z} = X^{Y * Z}$,
+which produce larger plans crashed the Mali version of \lclam\ every
+time they were attempted, but go through the Teyjus version.
+
+
+\subsection{pds\_support\index{pds\_support module}} 
+
+This contains lots of essential predicates for supporting the pds
+planner\index{pds planner}, such as {\tt
+  pds\_method\_trans}\index{pds\_method\_trans} for applying the
+methodical transformation rules\index{methodical!transformation
+  rules}, {\tt context\_plan\_step}\index{context\_plan\_step} for
+applying one step in the planning process, and various predicates for
+applying methods and critics \index{method!application} at a particular
+address.
+
+The major predicates in this module are as follows.
+
+\begin{description}
+  
+\item[context\_plan\_step\index{context\_plan\_step}] This accesses
+  the methodical expression\index{methodical expression} contained in
+  the current plan node.  It transforms this expression (using {\tt
+    pds\_method\_trans}\index{pds\_method\_trans} and {\tt
+    tidy\_continuation}\index{tidy\_continuation}) into a first method
+  and an subsequent methodical expression.  It then applies the first
+  method to the current plan node (using {\tt
+    apply\_method\_at\_address}\index{apply\_method\_at\_address}) to
+  gain new nodes that need to be added to the plan.
+
+\item[apply\_method\_at\_address\index{apply\_method\_at\_address}]
+  This predicate has several clauses trying to deal with occurrences
+  of {\tt triv\_meth}\index{triv\_meth} and {\tt
+    id\_meth}\index{id\_meth} and {\tt
+    triv\_tf\_meth}\index{triv\_tf\_meth} which is a method I
+  introduced when investigating counterexample generators.  This last
+  method is not used in regular builds of the system.  The two main
+  clauses deal with compound and atomic
+  methods\index{method!compound}\index{method!atomic}.  The atomic
+  method case applies the method to the goal and gets a compound
+  goal\index{goal!compound}.  I think the clauses for {\tt triv\_meth}
+  are probably redundant since they have been superseded by the clause
+  that checks for occurrences of {\tt trueGoal}\index{trueGoal} which
+  appears directly before it in the code.
+  
+  At this point things get a bit complicated.  A compound
+  goal\index{goal!compound} is a conjunction (or disjunction - though
+  this has never been investigated) of goals - e.g. the base and step
+  case of an induction.  Since a node in a plan contains a lot of
+  additional labels (e.g the method the continuations etc. etc.) we
+  don't want method writers to worry about this when their method
+  outputs two subgoals.  So they use the constructor {\tt
+    **}\index{**} to indicate a conjunction of goals.  This must then,
+  somehow, be turned into a list of child nodes.  We've experimented
+  with doing this immediately the goals were calculated and the
+  details of how this worked can be found by looking through the CVS
+  history.  We rejected this in favour of transforming compound goals
+  into lists of nodes as a separate application of {\tt
+    apply\_method\_at\_address}\index{apply\_method\_at\_address} and
+  this is the current implementation.  You will notice that special
+  cases are set aside to deal with {\tt pair\_meth}\index{pair\_meth}
+  when different methods are to be applied to different subgoals.
+  
+  It should be noted that we would like {\tt
+    then\_meth}\index{then\_meth} to be considered as {\tt then\_meths
+    X (map\_meth Y)}\index{then\_meths}\index{map\_meth}, i.e. {\tt
+    then\_meth} is a special case of {\tt then\_meths}.  {\tt
+    then\_meths} is intended to require that it be made explicit what
+  method is to be applied to which subgoal generated by its first
+  method.  This is not currently the case.  Dealing with {\tt
+    map\_meth} in an elegant way is quite hard.  At present
+  occurrences of {\tt map\_meth} are simply stripped where they occur
+  and the planner assumes that a method applies to all plan nodes if
+  there is a list of them at some point.  Probably the clause of {\tt
+    apply\_method\_at\_address}\index{apply\_method\_at\_address}
+  which deals with compound goals\index{goal!compound} should be
+  adapted so that it works out the appropriate continuations for its
+  subgoals in some suitable fashion.  At the moment we rely on
+  repeated application of this clause if there are more than two
+  subgoals (i.e. a tree of compound goals) to use {\tt map\_meth}
+  properly {\tt
+    apply\_method\_at\_address}\index{apply\_method\_at\_address}
+  would probably have to work through this tree in one go -- this
+  might also allow a more natural labelling of proof node positions
+  which currently list each splitting of a conjunct as a separate
+  node.  Alternatively there would need to be special cases for {\tt
+    map\_meth} applied to single proof nodes.
+  
+\item[apply\_critic\index{apply\_critic}] This is very similar to a
+  combination of {\tt pds\_method\_trans}\index{pds\_method\_trans}
+  and {\tt
+    apply\_method\_at\_address}\index{apply\_method\_at\_address}.  It
+  works through the critical expression\index{critical expression},
+  unpacking compound critics\index{critic!compound} until it reaches
+  an atomic critic\index{critic!atomic} which it applies to the
+  current plan and agenda.  It involves a sub-predicate {\tt
+    apply\_critic\_nodes}\index{apply\_critic\_nodes} which works much
+  like {\tt context\_plan\_nodes}\index{context\_plan\_nodes}.  This
+  is needed for uses of {\tt then\_crit}\index{then\_crit} and the
+  like where two critics may be applied one after another and we want
+  the second to work on the plan as it is after the application of the
+  first.  Essentially {\tt apply\_critic} deals with a whole critical
+  expression in one lump supplying at the end a list of nodes to be
+  added or deleted and a new agenda (included in the resulting
+  action\index{action}) unlike the planner's handling of methods which
+  it does in a much more step-by-step fashion.  This is by accident
+  rather than design and maybe should be thought on more carefully.
+
+\item[pds\_method\_trans\index{pds\_method\_trans}] This performs
+    methodical transformations as outline in BBNote 1349 (more or
+    less).  It treats {\tt then\_meth}\index{then\_meth} and {\tt
+      then\_meths}\index{then\_meths} identically.  I inherited this
+    from Julian who thought there was no need for two
+    methodicals\index{methodical} here.  I tried putting them back as
+    they are supposed to be (see Alan Smaill for details) but fell
+    foul of the handling of compound goals\index{goal!compound}
+    discussed above.  This all needs rationalisation.
+
+pds\_method\_trans\index{pds\_method\_trans} also contains some extra
+clauses beyond those that are strictly necessary to remove occurrences
+of {\tt id\_meth}\index{id\_meth}.  {\tt id\_meth} has a habit of
+``bulking out'' methodical continuations and it just makes things
+smoother to eliminate it where at all possible.
+
+\item[build\_plan\index{build\_plan}] This transformation the plan
+    (in the context) into an expression that can be output and printed 
+    to a user (or passed to a theorem prover).  Even in compact form
+    this uses a lot of memory.
+\end{description}
+
+\subsection{plan\_support\index{plan\_support module}}
+This module in theory contains predicates which are of use in general
+planner design.  {\tt tidy\_continuation}\index{tidy\_continuation} is
+yet another predicate for the removal of unwanted occurrences of {\tt
+  id\_meth}\index{id\_meth}.
+
+{\tt apply\_method\_to\_goal}\index{apply\_method\_to\_goal} is the
+basic method application predicate.  It contains two cases for
+critics\index{critic} and one for normal method application.  The
+normal application is straightforward.  It checks the method is
+non-trivial (i.e. not {\tt id\_meth}\index{id\_meth}), extracts its
+definition and then checks the preconditions\index{precondition} and
+postconditions\index{postcondition}.  It returns the preconditions and
+the new goals.  The first case for critics (where the
+action\index{action} is {\tt addmeth}\index{addmeth} but the method
+has a surrounding {\tt patch\_meth}\index{patch\_meth}) treats the
+method in exactly the same way.  It is only if the action is {\tt
+  critique}\index{critique} that something difference happens.  In
+this case the preconditions are evaluated one at a time by {\tt
+  evaluate\_in\_turn}\index{evaluate\_in\_turn}.  This marks each
+precondition individual as a success or a failure and returns this
+marked up list for consideration by the critic.  Essentially if a
+``patchable'' method is attempted and fails (i.e. the first clause
+fails) then it is attempted in ``critiquing mode''.  The action is
+used to determine new agendas and in {\tt
+  context\_plan\_step}\index{context\_plan\_step} to apply a critic
+instead of a method.  The action informs the planner of what it should
+do next.  {\tt evaluate\_in\_turn}\index{evaluate\_in\_turn} is
+largely uninteresting except to note that the nature of Teyjus prolog
+binding means that you have to explicitly bracket method
+preconditions\index{preconditions} -- (See the {\tt
+  wave\_method}\index{wave\_method} -- See also comments on {\tt
+  testloop}\index{testloop} in \S~\ref{sec:toploop}).
+
+{\tt create\_agenda}\index{create\_agenda} simply applies the agenda
+predicate\index{agenda predicate} to the plan state.  It has a second
+clause to allow some user interaction at this point.  {\tt
+  modify\_agenda}\index{modify\_agenda} deals with use intervention in 
+step by step planning mode\index{step by step planning}.  More on this 
+in the next section.
+
+Lastly {\tt depth\_first\_plan}\index{depth\_first\_plan} implements a 
+depth-first search strategy.  There are two records of plan
+state\index{plan state} that can be passed to this.  {\tt
+  pstate}\index{pstate} records the agenda and the current plan while
+{\tt pliststate}\index{pliststate} records the agenda and a list of
+nodes to be added or deleted.  The first is a hang-over from before
+the context planner\index{context planner} and has mostly been 
+cleaned up.  The fourth clause of {\tt depth\_first\_plan} is used
+after the firing of critics\index{critic} when frequently much of the
+plan has been rolled back or deleted and the new agenda may bear
+little relation to the current agenda\index{agenda}.
+
+\subsubsection{Editing Methodical
+Continuations\index{method!continuation}:  Allowing Users to
+Choose the Next Method\index{method!order}\index{method choice}}
+\label{editing}
+One of the features built into the Teyjus version of \lclam\ is the
+ability for a user to determine which method to apply next.  This
+turned out to have some subtleties (caused by the design of the
+partial data structure planning mechanism (PDS Planner\index{PDS
+  planner})) which I outline below.
+
+\subsubsection{The Planning Mechanism\index{planning mechanism}}
+
+A plan\index{proof plan} in \lclam\ is a labelled tree.  The labels of
+the nodes contain information such as the goal\index{goal} at that
+node, the method that was applied and a {\em method
+  continuation}\index{method!continuation}.  A method continuation is
+an expression of the methods to be attempted next.  The planner works
+by extracting a ``first method'' and a new method continuation from
+such expressions, applying the first method to the goal and using the
+continuation to determine the method to be applied to the subgoals.
+This extraction process is determined by the rules shown in
+figure~\ref{fig:continuation_rules} (taken from BBNote
+1349)\index{methodical!transformation rules}.
+\begin{figure}[htb]
+\hrule
+\begin{equation}
+\frac{M \Rightarrow F \oplus L}{repeat\_meth \: M \rightarrow F \oplus
+  (then\_meth \: L \: (orelse\_meth \: (repeat\_meth \:  M) \: id\_meth))}
+\label{repeat_meth}
+\end{equation}
+\begin{equation}
+\frac{M_1 \Rightarrow F \oplus L}{then\_meth \: M_1 \: M_2 \rightarrow F \oplus (then\_meth \: L \: M_2)}
+\label{then_meth}
+\end{equation}
+\begin{equation}
+\frac{M_1 \Rightarrow F \oplus L}{orelse\_meth \: M_1 \: M_2 \rightarrow F \oplus L}
+\label{orelse_meth1}
+\end{equation}
+\begin{equation}
+\frac{M_2 \Rightarrow F \oplus L}{orelse\_meth \: M_1 \: M_2 \rightarrow F \oplus L}
+\label{orelse_meth2}
+\end{equation}
+\begin{equation}
+\frac{M \Rightarrow F \oplus L}{try\_meth \: M \rightarrow F \oplus L}
+\label{try_meth1}
+\end{equation}
+\begin{equation}
+\frac{}{try\_meth \: M \rightarrow id\_meth \oplus id\_meth}
+\label{try_meth2}
+\end{equation}
+\begin{equation}
+\frac{C \hspace{0.5cm} M_1 \Rightarrow F \oplus L}{cond\_meth \: C \: M_1 \: M_2 \rightarrow F \oplus L}
+\label{cond_meth1}
+\end{equation}
+\begin{equation}
+\frac{\neg C \hspace{0.5cm} M_2 \Rightarrow F \oplus L}{cond\_meth \: C \: M_1 \: M_2 \rightarrow F \oplus L}
+\label{cond_meth2}
+\end{equation}
+\begin{equation}
+\frac{(then\_meth \: M \: triv\_meth \Rightarrow F \: L}{complete\_meth \: M \rightarrow F \oplus L}
+\label{complete_methp}
+\end{equation}
+\begin{equation}
+\frac{method\_name(M)}{M \rightarrow M \oplus id\_meth}
+\label{base}
+\end{equation}
+\hrule
+\caption{The Methodical Transformation Rules}
+\label{fig:continuation_rules}
+\end{figure}
+
+The PDS planner\index{pds planner} is currently implemented so that
+planning has two distinct stages.  First a proof node\index{proof
+  node} is expanded with a method to produce children.  Then the user
+is given the opportunity to interact with the planner, for instance to
+force backtracking.  It is here that a user can intervene to suggest
+that a particular method be tried first effectively overriding the
+method continuation which would otherwise be applied there.
+
+The obvious way to achieve this is to edit\index{method!choice} the
+current plan by 
+modifying the method continuation\index{method!continuation} appearing
+at the target node. 
+
+\subsubsection{Attempts at Modifying the Method
+  Continuation\index{method!continuation}} It is hard to do a good
+evaluation of what exactly is needed since I have essentially
+experimented with only one proof strategy/method
+waterfall\index{method!waterfall}\index{proof strategy} - i.e. that
+for induction\index{induction}.  The strategy for induction is
+characterised by a large {\em orelse\_meth}\index{orelse\_meth}
+expression encased in a {\em repeat\_meth}\index{repeat\_meth}
+expression.  This {\em orelse\_meth} expression contains not only the
+induction method\index{induction!method} but also symbolic
+evaluation\index{symbolic evaluation} and tautology
+checking\index{tautology checking} which are used to handle base
+cases\index{base case} and to finish off step cases\index{step case}
+after fertilisation\index{fertilise}.  The order in which methods
+appear in the {\em orelse\_meth} expression essentially determines the
+order in which they are attempted (for implementational reasons).
+
+One of the first tests I performed was to specify that I wanted to try 
+induction\index{induction} first, thus bypassing tedious backtracking
+over tautology 
+checking\index{tautology checking} and symbolic
+evaluations\index{symbolic evaluation} (a common frustration when
+attempting a proof).  
+
+I investigated a number of ways of doing this:
+
+\begin{description}
+\item[Replacing the Continuation] The most naive approach was to
+  completely replace the continuation\index{method!continuation} with
+  the new method (or methodical expression).  I quickly rejected this.
+  The problem with replacing the whole strategy with the induction
+  method\index{induction!method} alone as a first step was that I lost
+  the information for coping with base cases\index{base case} etc.
+  Hence I deduced that the new method needed to be ``embedded''
+  somehow in the expression to preserve this information.
+
+\item[Placing the New Method as an Alternative] This would be achieved 
+  by replacing the continuation, {\em Cont}, with {\em orelse\_meth M
+    Cont}\index{orelse\_meth} where {\em M} is the new method.  This
+  had the added 
+  potential of allowing the ``shuffling'' of {\em orelse\_meth}
+  expressions to allow the user to prioritise one option over the
+  other.  This was my preferred solution when I started the work since
+  I foresaw the possibility of an interface which could list all the
+  alternatives in an {\em orelse\_meth} expression and present them to 
+  the user to choose between.  However the enclosing {\em
+     repeat\_meth}\index{repeat\_meth} expression foiled this.  
+   
+   Say I have the expression\index{methodical!expression} {\em
+     repeat\_meth (orelse\_meth M N)} and I want {\em N} to be
+   attempted first.  If I ``shuffle'' the order in the {\em
+     orelse\_meth}\index{orelse\_meth} I end up with the expression
+   {\em repeat\_meth (orelse\_meth N M)} which essentially preserves
+   the ``shuffle'' in the subsequent repeats\index{repeat\_meth}.
+   Almost the only time you want to attempt induction\index{induction}
+   first is at the start of the proof.  In the base case and after
+   rippling\index{rippling} you want to attempt symbolic
+   evaluation\index{symbolic evaluation} and tautology
+   checking\index{tautology checking} before starting a new induction
+   off.  So this approach caused unnecessary backtracking/user
+   intervention later in the proof.
+
+Ditching the recursion through the {\em
+  repeat\_meth}\index{repeat\_meth} and editing\index{method!choice}
+the expression\index{methodical!expression} to {\em orelse\_meth N
+  (repeat\_meth (orelse\_meth M N))} didn't help since, if {\em N}
+succeeds I effectively loose the {\em repeat\_meth (orelse\_meth M N)
+  } expression and don't recover it until {\em N} is backtracked over.
+In this case I was back in the situation I was in when I replaced the
+continuation with a new one\footnote{except that this at least allows
+  recovering to the original strategy if the alternative one fails.}.
+
+It is tempting to think that at some point a user will reach the
+expression\index{methodical!expression} {\em orelse\_meth M
+  N}\index{orelse\_meth} without the enclosing {\em
+  repeat\_meth}\index{repeat\_meth} and will be able to
+edit\index{method!choice} it.  This does not happen if intervention
+occurs before or after the methodical
+transformation\index{methodical!transformation} process (since it will
+be modifying the result of the process).  The continuation of {\em
+  repeat\_meth (orelse\_meth M N)} is {\em then\_meth L (orelse\_meth
+  (repeat\_meth M N) id\_meth)} where {\em L} is the continuation
+produced by transforming {\em M} or {\em N} -- once again the
+alternatives are ``trapped'' under the {\em repeat\_meth} expression.
+Obviously if the user were allowed to intervene {\em during} the
+transformation process they could affect the resulting methodical in a
+more controlled way.  Methodical transformation is recursive so a user
+would need to be prompted for intervention every time the predicate
+recursed.  I deemed that this would rapidly become tedious and it
+wouldn't be at all clear to a novice user how to ``correctly'' direct
+the process.  It might be possible to pass information about user
+changes to the methodical transformation process rather than
+editing\index{method!choice} the methodical continuation in the plan
+node.  I've not investigated this but I fear it would be very fiddly
+and complex.
+
+\item[Placing the New Method in sequence before the Continuation] This 
+  is the solution upon which I finally settled.  This assumes a user
+  wants to preserve the existing strategy more or less intact but that
+  they want a new method inserted into the plan at just one point in such a
+  way that after the method is applied planning continues according to 
+  the original strategy.  {\em
+    try\_meth}\index{try\_meth} is used to make sure the whole
+  planning process doesn't  
+  fail if the suggested method fails.  So a methodical
+  expression\index{methodical!expression} {\em  
+    Cont} will be transformed to {\em then\_meth (try\_meth M) Cont}
+  when a user intervenes\index{method!choice}.
+\end{description}
+
+There are a couple of exceptions I implemented to this last rule.  It
+is common to start a plan with the expression {\em complete\_meth
+  M}\index{complete\_meth} ({\em complete\_meth} ensures the plan only
+succeeds if {\em M} succeeds with trivial subgoals) but it isn't
+common to use this anywhere else in the method
+waterfall\index{method!waterfall} for a
+strategy\index{proof!strategy}.  It seemed likely that someone
+proposing an alternative first method at the start of a planning
+process would in fact intend that method to be encompassed within the
+{\em complete\_meth} expression.  In this case the procedure recurses
+through {\em complete\_meth} and tries to add the new method to $M$.
+
+I also recurse into the first argument of {\em then\_meth}\index{then\_meth}
+expressions.  I'm not sure this is strictly necessary but I think it
+makes no difference to the behaviour described.
+
+\subsubsection{An Observation Motivating Recursion into {\em then\_meth}
+  Expressions\index{then\_meth}} I observed that once {\em then\_meth}
+appears at the top of a method continuation\index{method!continuation}
+it appears at the top of all subsequent method continuations for
+children of that node.  This is because it generates a {\em
+  then\_meth} expression as its continuation.  {\em
+  complete\_meth}\index{complete\_meth} and {\em
+  repeat\_meth}\index{repeat\_meth} also generate {\em then\_meth}
+expressions as their continuations so once any of these have appeared
+in the method waterfall all method continuations thereafter start with
+{\em then\_meth}.  Furthermore the first method in the {\em
+  then\_meth} expressions will not be a method name it will be a
+methodical expression (unless it is {\em id\_meth}\index{id\_meth} or
+{\em triv\_meth}\index{triv\_meth}).  You can see this by an inductive
+argument on the rules.  I originally recursed into {\em then\_meth}
+expressions when I was trying out the various options involving {\em
+  orelse\_meth} since it got me to the ``interesting'' part I wanted
+to change.  I saw no reason to change this after I'd settled on a
+solution although it was no longer clear this was strictly necessary.
+
+\subsubsection{Alternatives}
+The fact that I ran through several options for method
+choice\index{method!choice} suggests to me that different people may
+expect rather different things when using the facility.  I can
+certainly see that people might actually want to replace the next
+method rather than insert a new method in front of it.  This would
+indicate that a wider range options should be implemented.
+
+What I learned in doing this is that the methodical
+transformation\index{methodical!transformation} rules mean that care
+needs to be taken when creating or transforming plans on the fly
+otherwise important information can be lost.  In particular {\em
+  repeat\_meth}\index{repeat\_meth} will reproduce changes throughout
+a plan unless treated with care and this could well be undesirable
+behaviour.
+
+
+\subsection{critics\index{critics}}
+It is a good idea to look in both {\tt critics.sig} and {\tt
+  critics.mod}.  The various {\em criticals}\index{criticals} are all
+constructors for the type {\tt crit}\index{crit} - the type of
+critics.  The construction of the signature of this module is very
+similar to the method module\index{method module} in that it defines
+criticals\index{criticals} for creating critiquing strategies.  It
+also defines a type {\tt action}\index{action type} which is used to
+give instructions to the planning mechanism.  This type has three
+constructors:
+
+\begin{verbatim}
+type critique   crit -> (list int) -> action.
+type addmeth (list int) -> (list (list int)) -> action.
+type endplan action.
+\end{verbatim}
+
+{\tt critique}\index{critique} is used to instruct the planner to
+critique the last method application attempt, {\tt
+addmeth}\index{addmeth} is used to instruct it to try a method and
+{\tt endplan}\index{endplan} is used to instruct it to stop planning
+(NB. not sure if this last is implemented).
+
+It also defines a new methodical {\tt patch\_meth}\index{patch\_meth}
+which is used in a strategy to indicate a method that the user would
+like critiqued.
+
+The module also contains four atomic critics\index{critic!atomic} --
+{\tt pop\_critic}\index{pop\_critic}, {\tt
+  open\_node}\index{open\_node},
+\index{continue\_crit}\index{continue\_crit} and {\tt
+  roll\_back\_to\_crit}\index{roll\_back\_to\_crit}. 
+
+I'll discuss the criticals\index{criticals} first.  Criticals are used 
+by {\tt apply\_critic}\index{apply\_critic} in the pds\_support
+module{\index pds\_support module}.  Mostly they should be fairly
+self-explanatory (e.g. {\tt orelse\_crit C1 C2}\index{orelse\_crit}
+succeeds if one of the critics {\tt C1} or {\tt C2} succeeds).  The
+only ones I feel need any comment are {\tt subplan\_crit Ad
+  C}\index{subplan\_crit} which applies the critic {\tt C} at address
+{\tt Ad} in the plan and {\tt some\_crit C}\index{some\_crit} which
+applies {\tt C} to a meta-variable and continues - this can be read as 
+$\exists x. C(x)$.
+
+Atomic critics\index{critic!atomic} have 7 slots.  The theory in which
+the critic is used (in this case {\tt
+  general\_critics}\index{general\_critics}), the address at which the
+critic is applied, the current agenda, preconditions, postconditions a
+list of plan nodes to be added or deleted as a result of the critic
+and a new agenda.  The atomic critics are mostly straightforward {\tt
+  pop\_critic H}\index{pop\_critic} instantiates {\tt H} with the top
+address on the agenda\index{agenda}.  {\tt
+  open\_node}\index{open\_node} updates a nodes status to {\tt
+  open\_status}\index{open\_status}.  Status information is used to
+control the colour of nodes in the X\lclam{} interface\index{xlclam}
+and has not really been implemented in this version of \lclam\ (but
+should be).  {\tt roll\_back\_to\_crit Meth
+  Ad}\index{roll\_back\_to\_crit} looks for the nearest occurrence of
+the method, {\tt Meth}, in the plan and deletes all nodes between the
+current node and the address, {\tt Ad}, of that method occurrence and
+puts {\tt Ad} at the top of the agenda.  {\tt continue\_crit
+  C}\index{continue\_crit} applies {\tt C} to the
+continuation\index{continuation} at the address to which the critic is
+applied.  This essentially updates the continuation in some way (e.g.
+changing the next method to be attempted) and places that address at
+the top of the agenda.
+
+Using these atomic critics\index{critic!atomic} and
+criticals\index{critical} it is possible to build up critiquing
+strategies using compound critics\index{critic!compound}.  A compound
+critic has 3 slots: the name of the theory, and two critic slots.  You 
+can think of these as the ``name'' of the critic and then the critical 
+expression\index{critical expression} associated with the name.  
+
+\begin{example}
+So,
+for instance, the critic strategy for rippling is expressed (in the
+{\tt wave} module\index{wave module}) as:
+\begin{verbatim}
+compound_critic wave wave_critic_strat
+        (then_crit (pop_critic FailAd)
+        (then_crit (subplan_crit FailAd (then_crit (wave_failure Failure Rule)
+                                         open_node))
+                   (wave_patch Failure FailAd Rule))).
+\end{verbatim}
+So the critic {\tt wave\_critic\_strat}\index{wave\_critic\_strat}
+pops the current address off the agenda\index{agenda}.  At this
+address it then applies the critic {\tt
+  wave\_failure}\index{wave\_failure} - this simply analyses the
+failed preconditions at this address and instantiates {\tt Failure} to 
+the precondition\index{precondition} that failed and {\tt Rule} to the 
+rewrite rule\index{rewrite rule} being attempted.  It then opens the
+current node and applies the critic {\tt wave\_patch} which does the
+work.  An example of {\tt wave\_patch}\index{wave\_patch} is the
+generalisation critic\index{critic!generalisation} of Andrew Ireland.
+\begin{verbatim}
+compound_critic wave (wave_patch (failed_sink Emb) Ad _Rule)
+        (subplan_crit Ad
+        (then_crit 
+                (generalisation_AI Emb Lemma) 
+                (then_crit (roll_back_to_crit (induction_meth _ _) Address)
+        (subplan_crit Address
+                (continue_crit 
+                        (m\ (then_meth (introduce_gen Lemma)
+                            induction_critics))))))).
+\end{verbatim}
+This says that in the event of a failed sink\index{sink!failure} (the
+name of the critic is {\tt (wave\_patch (failed\_sink Emb) Ad \_Rule)}
+which tells us something about how the method\index{method!failure}
+failed.  At the address where the failure occurred ({\tt
+  subplan\_crit}\index{subplan\_crit}) we apply the atomic
+generalisation critic then we roll back the plan ({\tt
+  roll\_back\_to\_crit}\index{roll\_back\_to\_crit}) to the last
+occurrence of the induction method\index{method!induction} and then at
+that address we apply the {\tt introduce\_gen}\index{introduce\_gen}
+method followed by our {\tt
+  induction\_critics}\index{induction\_critics} method.  If you want
+to know what Andrew Ireland's generalisation critic does
+see~\cite{pub716}.
+\end{example}
+
+Lastly, in {\tt critics.sig} there is a type constructor {\tt
+  user\_crit}\index{user\_crit} this is for naming critics at the
+command line\index{command line} so it takes a string and returns a
+critic. 
+
+\subsection{plan\index{plan module}}
+The signature for the plan node defines a number of important types:
+{\tt plan}\index{plan type}, {\tt pnode\_status}\index{pnode\_status}, 
+{\tt agenda}\index{agenda type}, {\tt plan\_state}\index{plan\_state}, 
+{\tt preconditions}\index{preconditions} and {\tt
+  changed\_node}\index{changed\_node}.  
+
+{\tt plan}\index{plan type} has four constructors {\tt
+  and\_node}\index{and\_node}, {\tt or\_node}\index{or\_node}, {\tt
+  forall\_node}\index{forall\_node} and {\tt
+  exists\_node}\index{exists\_node}.  Of these {\tt or\_nodes} and
+{\tt exists\_node} have never been used in anger ({\tt or\_nodes} have
+never been used at all).  The intention is that a plan is a tree
+structure - so {\tt and\_node} is the basic constructor representing a
+node in the tree and its children.  An {\tt or\_node} is so people can
+experiment with multiple plans, especially in
+step-by-step\index{step-by-step mode} mode - but no one ever did this.
+{\tt forall\_node}s and {\tt exists\_node}s are used when a quantifier
+is removed from a goal and a constant introduced.  \lprolog\ handles
+this by quantifying the plan.  {\tt exists\_node}s are going to be
+important when anyone gets to grips with synthesis.
+
+The {\tt pnode\_status}\index{pnode\_status} type is only used in
+conjunction with \xlclam\ to provide the information needed to colour
+nodes.  As \xlclam\ is not up and running with this version of \lclam\ 
+yet I suspect all the status information is incorrectly implemented.
+
+There are three constructors for {\tt
+  preconditions}\index{preconditions}.  The type is used for marking
+which preconditions have succeeded or failed when
+critics\index{critic} are in use.  {\tt
+  nopreconditions}\index{nopreconditions} is used for nodes where no
+method\index{method} has yet been applied.  {\tt
+  success}\index{success} and {\tt failed}\index{failed} are used for
+individual preconditions.  There are two predicates {\tt
+  failed\_pre}\index{failed\_pre} and {\tt
+  success\_pre}\index{success\_pre} which can be used with a list of
+preconditions to return one that has failed or succeeded respectively.
+
+Agendas\index{agenda} are another aspect of \lclam\ that could use
+some more thought.  Mostly we only use {\tt
+  active\_agenda}\index{active\_agenda} which contains a list of the
+nodes currently needing expansion by the plan. {\tt
+  finished\_agenda}\index{finished\_agenda} is used once in the
+program which is after all planning as finished.  {\tt
+  failed\_agenda}\index{failed\_agenda} is used nowhere.  I think
+Jeremy Gow has a cleared idea of plans for the use of agendas than I
+do.
+
+{\tt plan\_state} is used for passing around agendas and
+``plans''.  The constructor {\tt pstate}\index{pstate} is a hangover
+from the days when the whole plan was passed around as an argument and 
+is arguably redundant.  {\tt pliststate}\index{pliststate} is a pair
+of an agenda and a list of plan nodes that need changing.
+
+{\tt changed\_node}\index{changed\_node} is a list of nodes that
+either need to be added to or deleted from the current context.  
+
+There are also a number of predicates in the plan module\index{plan
+  module}.  {\tt retrieve\_node}\index{retrieve\_node} and {\tt
+  retrieve\_binder}\index{retrieve\_binder} are used to access the
+plan stored in the context.  They are a little contorted in an attempt
+to only access the last node stored for any address.  {\tt
+  get\_open\_nodes}\index{get\_open\_nodes} is not used anywhere to my
+knowledge.  Similarly
+{get\_open\_nodes\_at}\index{get\_open\_nodes\_at}.  {\tt
+  transform\_node}\index{transform\_node} applies a function to a
+given address in a plan.  {\tt
+  rationalise\_addresses}\index{rationalise\_addresses} is used in the
+construction of child nodes during method application.  It is supposed
+to work out what the addresses of these child nodes should be.  After
+this there is a commented out function {\tt
+  remove\_AllGoals}\index{remove\_AllGoals} - this was at Jeremy's
+request and was used to transform any {\tt allGoal}s\index{allGoal}
+into {\tt forall\_node}s.  I removed it because it took an
+unreasonable amount of time.  In the new context planner it might be
+worth reinstating this.  There are also a selection of predicates
+(e.g. {\tt get\_method}\index{get\_method}) for extracting information
+from plan nodes\index{plan node}.
+
+\subsection{Method\index{method module}}
+The module is pretty straightforward.  It defines the
+methodicals\index{methodicals} and {\tt
+  user\_method}\index{user\_method} which works like {\tt
+  user\_crit}\index{user\_crit}.  The only interesting bit here is
+{\tt change\_method\_vars}\index{change\_method\_vars} which is used
+to keep the arguments to methods uninstantiated when they appear
+within {\tt repeat\_meth}\index{repeat\_meth} expressions.  NB.
+despite various attempts {\tt cut\_meth}\index{cut\_meth} has never
+been got to work.  Apparently Julian has some clever ideas about this.
+
+\subsection{Goal\index{goal module}}
+This module defines types for goals\index{goal type},
+and queries\index{query type}.  We distinguish between goals and
+queries since we use the query type for names of theorems we wish to
+prove while goals are for the actual syntactic expression in proofs.
+
+The constructors for goals are {\tt trueGoal}\index{trueGoal} and {\tt
+  falseGoal}\index{falseGoal} which, in theory, are used to indicate
+that a branch of the proof has completed.  In practice only {\tt
+  trueGoal} is recognised by the planner.  I originally implemented
+this so that \lclam\ and required
+something like {\tt triv\_meth}\index{triv\_meth} to pick them up.  I
+am now convinced this was a design flaw and that the proof should stop 
+the moment {\tt trueGoal} or {\tt falseGoal} appear.  The reason I
+implemented it alternatively was because of the definition of {\tt
+  complete\_meth}\index{complete\_meth} given in Alan S. and Julian's
+work -- i.e. that {\tt complete\_meth} only succeeds if {\tt trueGoal} 
+is reached.  Implementing a {\tt trueGoal} finder as well sort of
+makes the checking in {\tt complete\_meth} redundant since the proof
+stops before it gets that far.
+
+{\tt **}\index{**} and {\tt vv}\index{vv} are used for conjunctions and 
+disjunctions of goals.  Disjunctions of goals are not used anywhere in 
+the system at the moment.  Conjunctions are only used in method
+application and almost immediately split into lists of proof nodes.
+This is undesirable but I'm not clear exactly what the structure of
+interaction between conjunctions of goals and list of proof nodes
+should be.
+
+{\tt allGoal}\index{allGoal} and {\tt existsGoal}\index{existsGoal}
+indicate points where a quantifier is introduced into the proof.  This 
+is usually as a result of eliminating a quantifier from the
+syntactical expression of the goal conclusion.  Only {\tt allGoal} has 
+been used in anger.
+
+{\tt seqGoal}\index{seqGoal} is slightly different to the other
+constructors and is used to indicate that an expression is a sequent
+goal - the standard format for goals.  It is similar to the {\tt
+  ripGoal}\index{ripGoal} constructor used in rippling to indicate
+annotated goals.  I am a little uneasy about these.  Clearly
+arbitrarily more such constructors could be introduced in individual
+theories and potentially we may want some methods to apply to goals
+with these new constructors.  The fertilize method\index{fertilize
+  method} for instance already has cases for both forms of goal which
+are largely identical except for which input goal they pattern match
+to.  I think the solution may be to introduce destructors for goals
+which extract the hypothesis list and the conclusion (common to both
+forms used so far) then instead of pattern matching on {\tt seqGoal (H 
+  >>> G)} and {\tt ripGoal (H >>> G) Skel Embedding} in the input slot 
+of a method and then
+manipulating {\tt H} and/or {\tt G} we could pattern match on a
+variable {\tt Goal}, say, and then extract the hypotheses and
+conclusion with the destructor.  This would make the could more
+complex however.
+
+{\tt >>>}\index{>>>} is a constructor for {\tt osyn}\index{osyn} it is 
+intended to represent the mathematical symbol $\vdash$ and so is used
+to construct sequents.
+
+Three predicates are also declared: {\tt
+  reduce\_goal}\index{reduce\_goal} and {\tt
+  list2goal}\index{list2goal} are simple support predicates the first
+is used to simplify conjunctions and disjunctions of goals involving
+{\tt trueGoal}\index{trueGoal} the second is used to transform a list
+of goals into a conjunction of goals.  {\tt top\_goal}\index{top\_goal} 
+does not actually have any clauses in the goal module\index{goal
+  module}.  It is the predicate used elsewhere to declare theorems for 
+attempted proof.
+
+\subsection{Syntax\index{syntax module}}
+Our basic structure for syntax consists of constants and variables,
+function application and $\lambda$-abstractions.  So a
+term\index{term} or expression of type {\tt osyn}\index{osyn} can be
+thought of as:
+\begin{equation}
+osyn ::= c | v | osyn(osyn) | \lambda x. osyn(x) \nonumber
+\end{equation}
+In \lprolog\ we declare new constants as expression of type {\tt
+  osyn}, function applications is indicated by the {\tt
+  app}\index{app} constructor and $\lambda$-abstraction by the {\tt
+  abs}\index{abs} constructor.  Since \lprolog\ has
+$\lambda$-abstraction in the language the type of {\tt abs} is {\tt
+  (osyn -> osyn) -> osyn} - i.e. it applies to a function from {\tt
+  osyn} to {\tt osyn} not to an expression of type {\tt osyn} itself.
+
+We have complicated this basic format however.  Firstly we have
+introduced types and type attribution.  So we have {\tt
+  otype\_of}\index{otype\_of} which associates a term with its type.
+Term types\index{term type} are also of \lprolog\ type {\tt
+  osyn}\index{osyn} so we have an {\tt arrow}\index{arrow} constructor 
+for function types.
+
+We also introduce tuples of arguments, {\tt tuple}\index{tuple} (with
+associated {\tt tuple\_type}\index{tuple\_type}).  This is sugar and
+has been the source of much debate.  Alan Smaill has argued against
+doing away with it since it is frequently useful when manipulating
+terms to be able to distinguish between function and argument
+symbols.  I am now in favour of altering the type of {\tt
+  app}\index{app} to {\tt  osyn ->  (list osyn) -> osyn} and doing
+away with the {\tt tuple} constructor by subsuming it within the {\tt
+  app} constructor.
+
+We have a constructor {\tt user\_object}\index{user\_object} for
+introducing syntax at the command line and ``base constants'' {\tt
+  obj}\index{obj} and {\tt universe}\index{universe}.
+
+There are a number of support predicates {\tt
+  obj\_atom}\index{obj\_atom} succeeds if the argument is a constant
+or variable and fails if it is a function application or
+$\lambda$-abstraction.  {\tt subterm\_of}\index{subterm\_of} succeeds
+if the first argument is a subterm of the second.  It's third argument
+is the position of the subterm so it can be used to locate a subterm
+at a given position as well.  {\tt replace\_at}\index{replace\_at}
+replaces the subterm of the first argument appearing at the position
+indicated by its fourth argument with its second argument and returns
+its third argument (I suggest you look at the code here if you're
+interested).  {\tt copy\_term}\index{copy\_term} copies a term but
+replaces all the \lprolog\ variables - this is useful if you want to
+avoid things getting instantiated.
+
+{\tt has\_otype}\index{has\_otype} and {\tt
+  env\_otype}\index{env\_otype} are used to relate terms to their
+types.  {\tt env\_otype} takes an extra argument which is the
+hypothesis list so it can deduce types involving constants introduced
+in the hypotheses.  {\tt is\_otype}\index{is\_otype} has no clauses in
+this module it is used for declaring the types of constants introduced
+in theories.
+
+{\tt headvar\_osyn}\index{headvar\_osyn} succeeds if the argument is a
+variable.  
+
+\section{Input and Output}
+I can't comment on the pretty printing code but I will discuss the
+basic methodology I have used in implemented input and output
+mechanisms.
+
+There are potentially a number of ways users will want to interact
+with the system: at the command line\index{command line}, through our
+custom \xlclam\ interface\index{\xlclam}.  We also anticipate that
+external systems may wish to interact with \lclam\ possibly via {\sc
+  Prosper} or {\sc MathWeb}.  This means that \lclam\ needs to be able
+to receive input and generate output in a number of formats.  The
+module {\tt switch}\index{switch module} in the {\tt io} directory
+defines a type {\tt interaction}\index{interaction}.  Three values
+{\tt command}\index{command}, {\tt
+  command\_pretty}\index{command\_pretty} and {\tt
+  xbarnacle}\index{xbarnacle} have already been defined for this type.
+There is also a type {\tt switch}\index{switch type} which has the
+values {\tt on}\index{on} and {\tt off}\index{off}.  There is a
+predicate {\tt interactive\_mode}\index{interactive\_mode} which
+returns the current interaction mode being used.  This works much as
+{\tt retrieve\_node}\index{retrieve\_node} described above.  The
+default interaction mode is {\tt command\_pretty}.  We distinguish
+between {\tt command} and {\tt command\_pretty} because the pretty
+printer is very memory hungry.
+
+There are a large number of predicates defined in the {\tt
+  print\_syntax} module\index{print\_syntax module} and {\tt
+  print\_plan} module\index{print\_plan module} which all work much
+the same way.  I shall consider {\tt pprint\_term}\index{pprint\_term} 
+as an example.  
+\begin{verbatim}
+pprint_term Term:-
+        interactive_mode Interaction,
+        pprint_syn_for Interaction Predicate,
+        Predicate Term.
+
+pprint_syn_for command_pretty (X\ (pretty_show_term X, print "\n")):-!.
+pprint_syn_for _ printstdout.
+\end{verbatim}
+As can be seen {\tt pprint\_term} first uses {\tt
+  interactive\_mode}\index{interactive\_mode} to determine the
+appropriate style of interaction.  It then uses the predicate {\tt
+  pprint\_syn\_for}\index{pprint\_syn\_for} to retrieve a predicate.
+If the interaction mode is {\tt
+  command\_pretty}\index{command\_pretty} then the predicate is  
+one of the pretty printing predicates.  Otherwise the predicate is the 
+default {\tt printstdout}\index{printstdout} which prints the current
+\lprolog\ expression to standard out.  It then applies this predicate
+to the term.
+
+The {\tt switch}\index{switch module} also defines a predicate {\tt
+  step\_by\_step\_mode}\index{step\_by\_step\_mode} which can return
+{\tt on} or {\tt off} (again working at {\tt
+  retrieve\_node}\index{retrieve\_node}).  This is used in the {\tt
+  plan\_support} module\index{plan\_support module} to determine
+whether the planner is working in step by step mode or not.  There is
+also a predicate {\tt plan\_step\_prompt}\index{plan\_step\_prompt}
+which determines what the prompt should be for the next user
+interaction depending upon the interaction mode.
+
+We don't have any parsers yet so input predicates have not been
+defined.
+
+\subsection{Top Level Loop\index{top level loop}}
+\label{sec:toploop}
+I've talked in several places about the ``top level loop'' so I'm
+going to discuss here what I mean by this and how it's implemented.
+Relevant code can mostly be found in {\tt lclam.mod}\index{lclam
+  module}.  
+
+By a top level loop\index{top level loop} I mean the front end shown
+to the user or an 
+external program.  This front end is given an instruction
+(e.g. ``prove this'') executes the instruction returning any output to 
+the user or external program and waits for another instructions.  So
+conceptually its control flow looks like figure~\ref{fig:toploop}
+(hence loop)
+\begin{figure}[htb]
+\begin{center}\leavevmode
+\epsfbox{toploop.eps}
+\end{center}
+\caption{The Top Level Loop}
+\label{fig:toploop}
+\end{figure}
+This is actually fairly tricky to automate especially since we want
+some of the command to change the context (e.g. add new rewrite
+rules\index{rewrite rule}).  The basic loop is as follows:
+\begin{verbatim}
+lclam:-
+        pprint_string "lclam:",
+        read Command, !,
+        execute_command Command lclam, !.
+\end{verbatim}
+(NB. There are two versions of this one for interactive
+mode\index{interactive mode} {\tt command}\index{command} and one for
+interactive mode {\tt command\_pretty}\index{command\_pretty} -- the
+intention is, I think, to distinguish the situation from
+xlclam\index{xlclam} mode but I suspect this could be neatened).  
+
+This code prints the prompt 
+\begin{verbatim}
+lclam:
+\end{verbatim}
+reads in a command and then executes the command - {\em but} it also
+passes the name of the looping predicate to {\tt
+  execute\_command}\index{execute\_command} (more on this anon).  It
+is this predicate {\tt lclam}\index{lclam predicate} that is passed to 
+Teyjus by the lclam script\index{lclam script} in the {\tt bin/}
+subdirectory.  The ``basic'' code for {\tt execute\_command} occurs at 
+the end of the lclam module\index{lclam module} and is:
+\begin{verbatim}
+execute_command Command Loop:-
+        Command, !,
+        Loop.
+execute_command Command Loop:-
+        pprint_string "  Failed.\n",
+        Loop.
+\end{verbatim}
+So it can be seen this executes the command predicate and then
+executes the looping predicate - this is because there are several
+looping predicates like {\tt lclam} but {\tt execute\_command} can be
+used by all of them.  In between are a whole load of ``special cases'' 
+for {\tt execute\_command}.  These are all pretty similar so I shall
+only consider one, by way of example.
+
+The user has a command {\tt step\_by\_step}\index{step\_by\_step}
+which can be set to {\tt on} or {\tt off} indicating whether they want 
+to run in step by step mode\index{step by step mode} or not.
+Internally in \lclam\ this means they will be altering the current
+context.  Recall that step-by-step mode is used in the
+plan\_support\index{plan\_support module} module to determine whether
+or not to prompt the user for intervention in between each step of the 
+plan construction.  This is done by checking a predicate {\tt
+  step\_by\_step\_mode}\index{step\_by\_step\_mode} which returns {\tt 
+  on} or {\tt off}.  {\tt step\_by\_step\_mode} works by looking at
+the {\em first} success of a predicate call {\tt
+  step\_by\_step\_m}\index{step\_by\_step\_m}.  The code which allows
+the user to control what this first success will be is:
+\begin{verbatim}
+execute_command (step_by_step X) Loop:-
+        (step_by_step_m X => (pprint_string "Done", Loop)).
+\end{verbatim}
+Here we use \lprolog's {\tt =>}\index{=>} to put {\tt
+  step\_by\_step\_m X} (where {\tt X} will be the user's specified
+value) in the context and this ``most recent'' addition will be the
+first value returned by {\tt step\_by\_step\_m}.  \lclam\ will then
+print {\tt "Done"} and execute the loop predicate again.
+
+I said that {\tt lclam}\index{lclam predicate} was not the only
+possible top level loop\index{top level loop} predicate.  There is
+also {\tt testloop}\index{testloop}.  This automatically runs through
+a series of commands instead of prompting for user interaction between 
+each one.  So the code is
+\begin{verbatim}
+testloop (H, T):- !,
+        execute_command H (testloop T).
+testloop H:- !,
+        execute_command H lclam.
+\end{verbatim}
+This is much like {\tt lclam} except that it doesn't print prompts or
+read input and it has an argument which is the commands to be
+executed.  It does have a major flaw though (which is shared by the
+critics engine\index{critic}, incidentally) the association of the
+{\tt ,} in \lprolog\ means that you have to explicitly bracket the
+command list {\tt (Command1, (Command2, (Command3)))} to get it to
+work properly.  Otherwise, given {\tt Command1, Command2, Command3},
+\lprolog\ will match {\tt Command1, Command2} to the {\tt H} in the
+first clause and {\tt Command3} to the {\tt T}.  {\tt testloop} is
+used in the {\tt benchmark\_plan}\index{benchmark\_plan} predicate
+used in testing.
+
+There is also a third loop predicate in {\tt tjxb.mod}\index{tjxb
+  module} -- our first attempt at \xlclam.  It is called {\tt
+  xbloop}\index{xbloop}.  Off hand, I'm not sure if this is working.
+
+
+\section{Theories}
+I'm going to go through the theories in alphabetical order.  Many have 
+little of interest.
+\begin{description}
+\item[Arithmetic\index{arithmetic theory}]
+  Definitions\index{definition}, rewrite rules\index{rewrite rule}
+  and queries\index{query} for arithmetic.  It should be noted that
+  originally the 
+  definition of plus\index{plus} and times\index{times} used recursion
+  on a non-standard 
+  argument (i.e. $X + s(Y) = s(X + Y)$ instead of $s(X) + Y = s(X +
+  Y)$) this was so we could overload the operators and use them with
+  the ordinals\index{ordinals} as well.  However when we final wrote
+  separate operators for the ordinals we switched it back.  The
+  ``traditional'' definition makes the proof of
+  exptimes\index{exptimes} $(X^Y)^Z = X^Y * X^Z$ much harder (try it
+  by hand if you don't believe me) and so we can no longer prove this
+  on arithmetic or though we can still prove the
+  ordinal\index{ordinal} version.
+\item[Casesplit\index{casesplit theory}] This doesn't actually contain 
+  the casesplit method\index{casesplit!method} - some rationalisation
+  could probably usefully 
+  happen here.  This contains support predicate for the casesplit
+  method.  It should be noted that the method is only called by
+  critics and it assumes the rewrite rule condition and its negation
+  in the hypotheses lists of two new goals.
+\item[Challenges\index{challenges theory}] Contains definitions,
+  rewrite rules and queries for the induction challenge corpus.
+  Incomplete.
+\item[Clam Corpus\index{clam corpus theory}] Two files.  Contains
+  definitions rewrite rules and queries for the clam benchmarks.
+\item[Conjecture Tester\index{conjecture tester theory}]  Methods for
+  testing the truth or falsity of conjectures.  Not used anywhere.
+\item[Embed\index{embed theory}] Support for
+  embeddings\index{embedding}.  The main predicate is {\tt
+    embedding}.  This follows the theory of embeddings quite closely
+  though there is a certain amount of fancy footwork to try to prevent 
+  instantiation of variables.  The measure checking code {\tt
+    check\_measure\_reducing}\index{check\_measure\_reducing} was a
+  real nightmare to write and is not necessarily bug free.  This is
+  (for a change) fairly heavily commented in the code with my various
+  attempts and thoughts.  The real problem is controlling the turning
+  inward of outward wave fronts, especially in the presence of
+  critics.
+\item[GCD\index{gcd theory}] Goal for synthesising the greatest common 
+  denominator of three numbers.  Proof doesn't work.
+\item[Generalise\index{generalise theory}] The generalise
+  method\index{generalise method}.  Seeks for common subterms and
+  replaces them with a variable.
+
+\item[Induction\index{induction module}]  This contains
+  fertilisation\index{fertilisation method}, 
+  step case\index{step case method} and induction
+  methods\index{induction method}.  
+  
+  The fertilisation method uses a predicate {\tt
+    sink\_match\_}\index{sink\_match\_} to handle matching of sinks
+  and universally quantified variables.  Alan Smaill has pointed out
+  that this is not well though out in a theoretical sense.  In
+  particular many (all?) the proofs using ordinals\index{ordinal}
+  introduce a universal quantifier all the quantifiers originally
+  appearing in the expression have been stripped off (so that case
+  splitting works).  The variable associated with this quantifier is
+  then matched to a sink in the hypothesis even though the other
+  variables matching sinks are free variables.  There is some concern
+  that if more than one quantifier were to appear then quantifier
+  order might not be respected.  Note that fertilisation calls various
+  {\tt rewrite\_using}\index{rewrite\_using} predicates described in
+  the rewriting module\index{rewriting module}.
+  
+  The induction method\index{induction method} is relatively
+  straightforward since it hides all the nastiness in {\tt
+    all\_ripple\_analysis}\index{all\_ripple\_analysis}.  This returns
+  an ordered list of suggested induction schemes (in theory if not in
+  practice) and then uses {\tt nth}\index{nth} to recurse down this
+  list one at a time and attempt to apply the scheme.
+  
+  The step case method\index{step case method} is highly baroque.  It
+  is hard to describe the combination of plan attempts which lead to
+  this but I would recommend considering the plans of {\tt
+    qrevcorrect}\index{qrevcorrect} -- using the set up for {\tt
+    benchmark\_plan}\index{benchmark\_plan} from {\tt
+    list\_benchmarks}\index{list\_benchmarks} --, {\tt comm} and {\tt
+    memapp} as good litmus tests that everything is still working.
+  
+  Note also that there are two versions of nearly all the methods in
+  this theory: One using critics\index{critic} and one not.  I
+  considered parameterising the methods (since many are essentially
+  duplicates) with whether critics were in use or not but never got
+  round to thinking this through.
+\item[list\_benchmarks\index{list\_benchmarks}] Self-explanatory
+  really.  Definitions and theorems for a large number of list based
+  theorems for benchmarking.  It has its own version of {\tt
+    benchmark\_plan}\index{benchmark\_plan} at the bottom.  This is
+  largely intended for testing {\tt qrevcorrect}\index{qrevcorrect}
+  since it contains the associativity of append\index{associativity of
+    append} as a rewrite rule\index{rewrite rule} most of the other
+  are intended for testing on the set up in {\tt
+    map\_benchmarks}\index{map\_benchmarks}.
+\item[map\_benchmarks\index{map\_benchmarks}]
+Definitions etc. involving higher order functions such as
+map\index{map}, fold\index{fold} and filter\index{filter}.
+\item[mlremovelists\index{mlremovelists}]
+Stuff for my ML work.
+\item[objlists\index{objlists}]
+List theory.  
+\item[ordinal\index{ordinal}] Ordinal theory.  Lots of this is
+  discussed in~\cite{DennisSmaill:TPHOLS01} although as ever this
+  discussion is a little out of date (it neglects to mention the
+  treatment of quantifiers in the step case method\index{step case
+    method}).
+\item[rewrite\_types\index{rewrite\_types}] I separated out the
+  rewriting\index{rewriting} methods and the types used in them
+  because I wanted all method/rewrite rule stuff to be compiled {\em
+    after} all the planning code so that the precise composition of
+  theories could be customised.  However I found I needed to know the
+  types for rewriting for the pretty printer\index{pretty printer}
+  which is compiled in with the planner.  I now think the rewriting
+  specific stuff could be separated out from the pretty printing code
+  and probably should be included with the rewriting
+  module\index{rewriting module} in which case the rewriting and
+  rewrite\_types\index{rewriting module}\index{rewrite\_types module}
+  modules could be merged.
+\item[rewriting\index{rewriting}] The major method in this file is the
+  {\tt rewrite\_with}\index{rewrite\_with} method.  This rewrites a
+  goal with an rule taken from a list specified by the user.  If you
+  look in {\tt rewrite\_types.mod} you'll see a couple of these set
+  up.  The two I've used are {\tt
+    sym\_eval\_rewrites\_list}\index{sym\_eval\_rewrites\_list} and
+  {\tt general\_rewrites\_list}\index{general\_rewrites\_list}.  In
+  practise there is no difference between these.  In theory {\tt
+    sym\_eval\_rewrites\_list} should only contain confluent rewrite
+  rules, but this is not enforced in any way.
+  
+  As well as {\tt rewrite\_with}\index{rewrite\_with} there is an
+  atomic method called {\tt rewrite\_with\_hyp} which rewrites using
+  rules from the hypotheses.  Obviously this has implications for
+  confluence and the like which have not been explored at all.
+  
+  There are two compound methods {\tt sym\_eval}\index{sym\_eval} and
+  {\tt general\_rewriting}\index{general\_rewriting}.  They both
+  repeatedly apply {\tt rewrite\_with}\index{rewrite\_with} just with
+  different lists of rules so there is little to distinguish between
+  them.  {\tt sym\_eval} also uses {\tt
+    rewrite\_with\_hyp}\index{rewrite\_with\_hyp} largely because {\tt
+    general\_rewriting} is hardly ever used in practice and so has not
+  yet been extended.  {\tt sym\_eval} should probably be renames {\tt
+    simplify} or some such since in practice it is used whenever a
+  proof strategy is deemed to need to apply some rewriting in order to
+  simplify a goal.
+  
+  Of the support predicates {\tt congr}\index{congr} is the most
+  interesting and something similar is implemented for
+  rippling\index{rippling}.  {\tt congr} is higher-order and is
+  intended to apply rewriting to some subterm of a term.  It takes as
+  an argument a predicate that is to be used to transform a term.
+  It's other arguments are the rewrite rule\index{rewrite rule} used,
+  a polarity\index{polarity} argument, the term, the new term and any
+  conditions on the rewrite rule.  It then recurses through the term
+  structure until it finds a sub-term to which the predicate applies.
+
+  
+  The idea behind polarities\index{polarity} are explained in Santiago
+  Negrete's thesis~\cite{negrete-thesis}.  Essentially the idea is
+  that where a rewrite rule\index{rewrite rule} is an implication not
+  an equivalence (e.g. $Y \rightarrow X \rewritesimp (X \vee Y)
+  \rightarrow (X \vee Z)$) care needs to be taken in its application.
+  We reason backwards in conclusions but (should anyone implement it
+  ever) we reason forwards in hypotheses.  Clearly if your goal is
+  $\Gamma \vdash (A \rightarrow B)$ then the {\tt
+    imp\_i}\index{imp\_i} rule of inference can be used to deduce
+  $\Gamma, A \vdash B$ - so if we apply rewriting we need to be sure
+  that it is forwards in $A$ even though we would normally reason
+  backwards in hypotheses.  This is represented in the code although
+  it is confused by the fact that our abstract syntax has required the
+  introduction of {\tt polar\_term}\index{polar\_term} to match
+  polarities to the arguments of functions and then there is some work
+  to handle and remove these wrappers at later dates.
+  
+  {\tt bad\_for\_synthesis}\index{bad\_for\_synthesis} is a hack put
+  in there because certain rewrite rules\index{rewrite rules} e.g.
+  beta reduction\index{beta reduction}, $(\lambda x. F(x)) Y \rewrites
+  F(Y)$ can fire repeatedly in the presence of
+  meta-variables\index{meta-variables} - e.g. $G(z)$ instantiates the
+  meta variable $F$ to $\lambda x. F(x)$ and rewrites to $F(z)$ and so
+  on.  I think maybe the predicate should be declared in this module
+  but the clauses should appear in the theory files where the
+  offending rewrite rules are declared (this might affect compilation
+  order though).
+  
+  {\tt rewrite\_using}\index{rewrite\_using} and {\tt
+    rewrite\_using\_prop}\index{rewrite\_using\_prop} are predicates
+  for stripping quantifiers off hypotheses\index{hypotheses} and then
+  using them as rewrite rules\index{rewrite rule}.  They were
+  originally written for use with the fertilisation
+  method\index{fertilisation method} but have been adapted for more
+  general use.
+
+\item[ripple\_types\index{ripple\_types module}]  My comments on this
+  are pretty much identical to those on the rewrite\_types
+  module\index{rewrite\_types module}.
+\item[schemes\index{schemes module}] Another nightmare of a module
+  which is probably far from bug free.  Induction
+  schemes\index{induction scheme} as they appear in various theory
+  files consist of 7 slots: the name of the theory, the name of the
+  scheme, the type to which the scheme applies, a {\em
+    substitution}\index{substitution} which is intended to indicate in
+  some sense what the scheme does, some sort of expression indicating
+  the measure on scheme (I know nothing about this nor have any idea
+  what it does - I think it's something to do with Jeremy Gow's work)
+  and the goals before and after scheme application.  The predicate
+  {\tt ripple\_analysis}\index{ripple\_analysis} in the schemes module
+  is the major predicate that deals with all this.  In theory ripple
+  analysis considers all possible induction schemes that apply to a
+  goal and orders them.  This ordering is based on the number of
+  flawed and unflawed variables\index{flawed variable}\index{unflawed
+    variable} and some measure of how ``complicated'' the
+  scheme\index{induction scheme!complexity} is.  A flawed variable
+  occurrence is one where the structure introduced by the scheme can
+  not be moved by a rewrite rule.  At the moment the measure on the
+  ``complexity'' of the scheme just looks at how many constructors are
+  introduced by the scheme.  Back to the {\tt ripple\_analysis}
+  predicate.  The predicate starts out by assuming an {\tt
+    empty}\index{empty} substitution.  If the goal is universally
+  quantified (giving a candidate induction variable\index{induction
+    variable}) it picks an induction scheme of the appropriate type.
+  This provides a new substitution which is passed into the recursive
+  step (the new goals are not).  Substitutions have two main
+  constructors {\tt dom}\index{dom} and {\tt repl}\index{repl} - {\tt
+    dom} is used to introduce a new constants, {\tt repl} is the
+  constructor that conveys informations expressing what a variable
+  will be replaced by according the the induction scheme.  If you look
+  at the second two clauses for {\tt ripple\_analysis} you will see
+  these at work.  {\tt repl} is used to introduce a substitution for
+  the universally quantified variable, eliminating the quantifier in
+  the process.  {\tt ripple\_analysis} then recurses, once again
+  provided an {\tt empty} substitution.  I am interested to note that
+  {\tt ripple\_analysis} never successfully applies schemes to two
+  variables in the one goal - needed for many proofs involving the
+  order on natural numbers\index{order on natural numbers} for
+  instance - and I suspect the bug may lie here somewhere (in fact the
+  {\tt Max} argument - set to 1 by {\tt
+    induction\_meth}\index{induction\_meth} looks like a likely
+  culprit to me).  {\tt ripple\_analysis} can skip over quantifiers
+  (clause 4 of the predicate) and since it is called from within a
+  {\tt findall}\index{findall} this means induction schemes are tried
+  out on all variables.  There is a final case where instead of
+  looking for universally quantified variables the scheme is applied
+  to a variable declared in the hypothesis list - i.e. a previously
+  introduced induction variable.  This is needed for the proof of the
+  commutativity of multiplication\index{commutativity!of
+    multiplication}, {\tt comm}\index{comm}.  The final clause of {\tt
+    ripple\_analysis} is called when all universal quantifiers have
+  been stripped off.  At this point the predicate counts the flaws.
+  
+  {\tt number\_flaws}\index{number\_flaws} and {\tt
+    number\_flaws\_}\index{number\_flaws\_} which count
+  flaws\index{flaw} are pretty straightforward.  The main problem is
+  the need to make copies of the terms, changing all meta-variables to
+  prevent them being instantiated by the rewriting\index{rewriting}
+  process.  This problem only shows up when attempting to prove goals
+  containing meta-variables\index{meta variable}, e.g. the correctness
+  of qrev\index{qrev!correctness} which uses the generalisation
+  critic\index{generalisation critic}.
+  
+  At the top of the file is the predicate {\tt
+    all\_ripple\_analysis}\index{all\_ripple\_analysis} which finds
+  all applicable induction schemes\index{induction scheme} and returns
+  them as a list.  This is then sorted using an insertion sort and a
+  member of the list returned.  {\tt
+    pick\_quantifier}\index{pick\_quantifier} rearranges the
+  quantifiers in the list allegedly so that the scheme applies to the
+  right quantifier.  I'm at a loss as to how it knows which quantifier
+  was intended since the number supplied seems to come from the
+  position of the scheme in the ordered list (see {\tt
+    induction\_meth}\index{induction\_meth}).  You can tell I don't
+  really understand all this can't you!!!
+  
+  Finally another problem is with schemes\index{induction scheme} that
+  have more than one step case\index{step case} (e.g. the scheme used
+  by the ordinal arithmetic\index{ordinal arithmetic} methods).  The
+  substitution\index{substitution} only considers one possible
+  replacement so it is impossible to check whether a scheme is flawed
+  (or unflawed)\index{flawed}\index{unflawed} on all its cases.  I
+  think an additional substitution constructor and some extra cases in
+  {\tt ripple\_analysis}\index{ripple\_analysis} might solve this.
+\item[test\_set\_gen\index{test\_set\_gen module}] This is used for
+  generated counter-examples.  These are not at present used anywhere
+  and are experimental.
+\item[testdatatype\index{testdatatype module}] This contains a dummy
+  datatype for use with counter-example finding.
+\item[wave\index{wave module}] This contains the contents of two
+  modules joined together.  It performs rippling\index{rippling}.  The
+  {\tt wave\_method}\index{wave\_method} itself should be fairly
+  clear, based on the reconstruction of rippling Andrew performed for
+  critics\index{critic}.  The preconditions are\index{precondition}:
+  Find a wave rule\index{wave rule} that applies, check any conditions
+  are trivial, check that the skeleton\index{skeleton} embeds into the
+  new goal, check this embedding\index{embedding} is measure
+  reducing\index{embedding!measure}, and check it is
+  sinkable\index{sinkable}.
+  
+  The other methods in this file are {\tt
+    wave\_case\_split}\index{wave\_case\_split} which fires only if
+  called by the casesplit critic\index{casesplit critic}.  This
+  happens if a condition on a rewrite rule was not trivial.  This
+  method assumes the condition and its negation in the hypothesis list
+  of two new goals and then continues.  I'm not at all sure this
+  method should be here, support predicates for it are in the
+  casesplit module\index{casesplit module}; {\tt
+    set\_up\_ripple}\index{set\_up\_ripple} and {\tt
+    post\_ripple}\index{post\_ripple} which annotate and strip
+  annotations from goals respectively.
+  
+  There are a couple of other support predicates, {\tt
+    fun\_abs}\index{fun\_abs}, which I've never been entirely happy
+  with which is for handling $\lambda$-abstractions in skeletons, {\tt
+    measure\_check}\index{measure\_check} which uses {\tt
+    filter2}\index{filter2} (once of the mapping predicates from the
+  lclam\_map module\index{lclam\_map module}) to check that at least
+  one embedding is measure reducing and return all those that are.
+  {\tt ind\_hyp}\index{ind\_hyp} which attempts to identify candidate
+  induction hypotheses.  (NB. In \clam\ I believe that induction
+  hypotheses were explicitly annotated as such, we've not had a need
+  to do this yet but it might be worth considering).
+
+  
+  We then have some critics.  The {\tt
+    wave\_critic\_strat}\index{wave\_critic\_strat} which analyses the
+  failed preconditions and calls the {\tt
+    wave\_patch}\index{wave\_patch} critic.  {\tt
+    wave\_patch}\index{wave\_patch} behaves differently depending on
+  the precondition that failed.  The atomic
+  critic\index{critic!atomic} {\tt wave\_failure}\index{wave\_failure}
+  is the one that analyses preconditions.
+  
+  {\tt ripple\_rewrite}\index{ripple\_rewrite} behaves much like {\tt
+    rewrite\_with}\index{rewrite\_with}.  The addition is that it
+  allows rewriting in either direction and it attempts, as it goes, to
+  keep track of skeletons and
+  embeddings\index{skeleton}\index{embedding} and specifically
+  preserve as much of the embedding as possible so that less work is
+  later done in constructing and embedding between the new term and
+  the skeleton.
+  
+  {\tt wcongr\_ripple}\index{wcongr\_ripple} deconstructs the term
+  attempting to apply a rewrite rule.  At the same time it
+  deconstructs the embedding so as to preserve as much of it as is
+  unaffected by the rewrite.  This means sorting through possible
+  skeletons\index{skeleton} and embeddings\index{embedding} to reject
+  those that are no longer applicable.  This is done using {\tt
+    congr\_ripple\_skel}\index{congr\_ripple\_skel}.  It wouldn't
+  surprise me if this could all be rationalised.
+  
+  There are also {\tt wave\_rules\_list}\index{wave\_rules\_list} and
+  {\tt wave\_rule\_list}\index{wave\_rule\_list} which work like {\tt
+    retrieve\_node}\index{retrieve\_node} etc.  {\tt
+    embeds\_list}\index{embeds\_list} maps {\tt embeds}\index{embeds}
+  down a list and {\tt
+    step\_forall\_embeds}\index{strip\_forall\_embeds} which replaces
+  all universally quantified variables in the skeleton\index{skeleton}
+  with wild cards\index{wild card} used to represent
+  sinks\index{sink}.  {\tt
+    congr\_ripple\_skel}\index{congr\_ripple\_skel} is part of the
+  {\tt congr}\index{congr}-style predicate {\tt
+    wcongr\_ripple}\index{wcongr\_ripple} used in rippling.  Because
+  rippling happens with reference to a list of skeletons and
+  embeddings (so it can be treated as
+  ``coloured''\index{rippling!coloured} although this has not been
+  implemented) it can happen that some embeddings are excluded from
+  consideration by a particular ripple.  The purpose of {\tt
+    congr\_ripple\_skel} is to partition the list of embeddings into
+  those that are applicable in the current situation and those that
+  are not. {\tt reform\_emb}\index{reform\_emb} attempt to put these
+  back together but replaces unused embeddings with {\tt
+    dummytree}\index{dummytree} because, err..., umm - I'll get back
+  on this.
+  
+\item[wave\_critics\index{wave\_critics}] This contains most of the
+  wave critic code.  Again, I vaguely feel this could all be organised
+  better.  At the moment there are only two critics\index{critic}.
+  One for casesplitting\index{case split} and one for
+  generalisation\index{generalisation!critic}.  There is some
+  partially written code hanging around for a putative induction
+  revision critic\index{critic!induction revision}\index{induction
+    revision critic}.  The casesplit critic is\index{critic!case
+    split} is pretty straightforward.  If the {\tt
+    trivial\_condition}\index{trivial\_condition} precondition
+  fails\index{precondition} then it creates two new subgoals one with
+  the condition and one with its negation in the hypotheses list.  The
+  generalisation critic (called {\tt
+    generalisation\_AI}\index{generalisation\_AI} since other
+  generalisation critics have been proposed - this is the on from
+  Andrew Ireland).  Constructs a generalised version of the goal where
+  the induction method\index{induction method} fired and rolls back
+  the plan to this point, introducing this generalisation (using the
+  {\tt introduce\_gen}\index{introduce\_gen} method) instead of
+  applying induction.
+\item[whisky\index{whisky module}] This contains an expression of the
+  ``Whisky Problem''\index{whisky problem} from temporal logic.  See
+  Alan Smaill about the details.  It also contains some functions I
+  used as benchmarks to check that
+  rewriting/rippling\index{rewriting}\index{rippling} can take place
+  within functions as well as their arguments.
+\end{description}
+
+
+\section{Testing and Benchmarking}
+
+There are two methods for testing out the effects of modifications of
+\lclam\ in the context of the rest of the system.  There is a
+\lprolog\ module called test which runs quick checks of parts of the
+system and a executable called {\tt benchmark}\index{benchmark} for
+  running \lclam\ 
+over its corpus\index{\lclam\ corpus}.  These are briefly described here.
+
+\subsection{Quick Testing\index{testing}}
+
+To quickly test the system on a couple of examples type 
+
+\begin{verbatim}
+$LCLAM_HOME/bin/lclam
+\end{verbatim}
+%% $
+at the command line.
+
+Then type \index{testpds}\index{testpds}:
+\begin{verbatim}
+testpds.
+\end{verbatim}
+At the prolog prompt.  This should run \lclam\ 
+over a three or four
+examples giving brief information as to what each one is
+supposed to test.  
+
+\subsection{Benchmarking\index{benchmark}}
+In the {\tt bin/} subdirectory of the \lclam is an executable {\tt
+  benchmark}.  This will run \lclam\ over all those problems in its
+built-in corpus that it can currently plan and write the results to a
+file {\tt report.tex} in a subdirectory {\tt tests} of that the
+benchmarking is attempted in.  Some of these benchmarks run off
+specific theory files not included in the general build so a benchmark
+run should be preceded by
+\begin{verbatim}
+[prompt] make allclean
+[prompt] make benchmarks
+\end{verbatim}
+in the {\tt src} directory.  The tutorial subdirectory of the \lclam\
+distribution should be added to your {\tt \$TJPATH}.  
+
+The name of this subdirectory can be altered using the flag
+
+{\tt benchmark -dir} {\em  report\_directory}
+
+
+{\tt benchmark} attempts most of the problems using {\tt
+  induction\_critics}\index{induction\_critics} with all the
+definitional rewrite rules\index{rewrite rule} and induction
+schemes\index{induction scheme} available to the system switched on
+and a few other rewrite rules.  NOTE: All the benchmarks should
+succeed in under 10 minutes when run on methven except {\tt
+  falsearith}\index{falsearith}, which should fail, and {\tt
+  exptimesord}\index{exptimesord} (which may well run out of memory).
+
+There is also a similar script {\tt fulltests}\index{fulltests} which
+will run \lclam\ over the complete corpus.
+
+To add more theorems to the benchmark and fulltests
+set\index{benchmark set} a developer should edit the file {\tt
+  benchmark} and {\tt fulltests}.  The best way to control the rewrite
+rules etc. available when benchmarking is to write a clause for the
+{\tt benchmark\_plan}\index{benchmark\_plan} predicate in your theory.
+
+\begin{verbatim}
+benchmark_plan theory -> meth -> query -> o.
+\end{verbatim}
+
+Examples of this predicate can be seen in the {\tt
+  map\_benchmarks}\index{map\_benchmarks} theory file and the {\tt
+  ordinal}\index{ordinal} theory file.  The predicate {\tt
+  testloop}\index{testloop} can be used to mimic the sequence of
+commands you would type in at the command line.
+
+The script {\tt lclam\_test\_lib}\index{lclam\_test\_lib} takes three
+arguments: the query name ({\em query}), the name of the top method to
+be used ({\em meth}) and the theory name ({\em theory}) plus an
+optional fourth argument {\tt -timeout} {\em seconds}.  It starts up
+\lclam\ on the theory file {\tt theory.lp} and calls {\tt
+  benchmark\_plan theory meth query}.  NB.  This will thus only work
+properly if the theory name is the same as the name of the module that
+contains it.
+
+You should add the following lines to {\tt benchmark} and {\tt
+  fulltests} where {\tt query1}, {\tt query2}, {\tt query3} are the
+names of your new theorems, {\tt meth} is the top method you want used
+and {\tt theory} is the name of your theory.
+
+\begin{verbatim}
+foreach x (query1 query2 query3)
+echo Trying to prove $x.
+($LCLAM_HOME/bin/lclam_test_lib $x meth theory $timeout >& $report_dir/$x.tex ; $LCLAM_HOME/bin/report $report_dir/$x.tex >> $report_dir/report.tex) &
+sleep $wait
+end
+\end{verbatim}
+
+
+As default {\tt benchmark} (and {\tt fulltests}) time out each attempt
+after 5 minutes. 
+This can be altered by setting the flat
+
+{\tt benchmark -timeout} {\em seconds}
+
+It waits for 30 seconds between each attempt
+This can be altered by setting the flat
+
+{\tt benchmark -wait} {\em seconds}
+
+As a default {\tt benchmark} and {\tt fulltests} write their output to 
+the file {\tt report.tex} in the subdirectory {\tt tests}.  They also
+create individual output files for each problem which show the \lclam\ 
+output generated.  To change the directory where the output is placed
+(e.g. if you don't want your previous results overwritten) use the
+flag {\tt -dir} {\em dir} with the scripts.

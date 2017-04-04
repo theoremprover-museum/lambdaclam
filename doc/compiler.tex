@@ -1,0 +1,547 @@
+\newcommand{\lyacc}{$\lambda$yacc\xspace}
+
+\chapter{Compiling Theories to \lclam}\label{compiler}
+
+%\author{Ewen Denney}
+
+\section{Introduction}
+
+This chapter describes the current state of the \lclam theory
+compiler.  It develops the idea that a logic can be presented in a
+high-level declarative style, and then {\em compiled} down into a more
+procedural implementation-specific language.
+
+The reasons for wanting to do this are:
+\begin{itemize}
+\item the user-unfriendliness of the current \lclam format
+\item to avoid errors that can arise when entering axioms and
+  inferences as low-level rewrites and methods
+\item (ultimately) to aim for a logic-independent planner by factoring out
+  logic-specific code
+\item since a high-level representation of logics and theories, rather than
+  one which is hard-wired into a low-level implementation, is easier
+  to communicate.
+\end{itemize}
+
+In our case, of course, the procedural language is \lclam's format for
+the paraphernalia of proof planning (expressed in HOAS) in \lprolog;
+for declarative language, we simply make up our own user-friendly
+syntax for declarations, inference rules, and the like.
+
+
+The compiler has two modes of use: online, using the {\tt add\_theory}
+command during \lclam's normal command loop, and offline, generating a
+separate \lclam theory file.  The offline mode is currently deprecated
+but is described here as it helps understand the general compilation
+process and may prove useful in the future.
+
+\section{Online Mode}
+
+The command
+$${\tt add\_theory} \mbox{\em ``theory-file''}$$
+will read in the file
+{\em theory-file}, check its well-formedness, and generate the
+appropriate user-defined constants.
+
+For example, the file {\tt simpletheory}:
+\begin{verbatim}
+Theory Nsa.
+Use Logic arithmetic.
+
+type real.
+type hyperreal.
+$
+\end{verbatim}
+gives the following results:
+\begin{verbatim}
+lclam:
+add_theory "simpletheory".
+Trying ...Scanning for tokens...
+Tokenizer stopped after line 6
+Parsing...
+Successfully parsed
+Checking well-formedness...
+Type real
+Type hyperreal
+Theory is well-formed
+Importing lclam declarations...
+Successfully processed
+Done
+Done
+lclam:
+\end{verbatim}
+We can now use the query commands to check that the definitions have been made
+correctly.
+\begin{verbatim}
+lclam:
+query_osyn (user_theory "nsa") (user_object "real") X.
+default
+user_theory "nsa"
+real
+universe
+lclam:
+\end{verbatim}
+
+A more complex example of a theory file can be seen in
+Section~\ref{theory}.
+
+\section{Offline Mode}
+
+We describe here how a user can use the files {\tt
+  envgrammar.\{sig,mod\}} and\linebreak 
+{\tt postprocess.\{sig,mod\}} in the
+{\tt compiler} directory to parse a theory file written in concrete
+syntax and generate a \lclam theory file.
+
+We first explain how to use the compiler, and in the following
+sections, explain the workings of the compiler in case the user wants
+to alter it.
+
+The phases of such a logical compilation are much the same as in the
+compilation of programs: parsing of concrete into abstract syntax
+(Section \ref{parsing}), a well-formedness check (Section
+\ref{well-formedness}), and then code generation (Section
+\ref{generation}). We give the grammar for theory files (Section
+\ref{grammar}), and examples of concrete syntax (Section \ref{theory}) and
+the corresponding \lclam (Section \ref{lclam}).
+
+
+\subsubsection{Using the Compiler}\label{makefile}
+
+First, edit the {\tt Makefile}, if necessary, to alter the paths appropriately.
+
+Then, generate the parser by
+\begin{alltt}
+make envparser
+\end{alltt}
+Next, do
+\begin{alltt}
+make postprocess
+\end{alltt}
+
+If the theory file is {\tt theoryfile}, then the command
+\begin{alltt}
+parsefile "theoryfile" X.
+\end{alltt}
+will bind to $\tt X$ the abstract syntax that results from parsing
+this file. This might be useful to you if you just want access to the
+higher-order abstract syntax form of an expression.
+
+Here, {\tt theoryfile} is the file with concrete syntax which you can,
+of course, change and rename. Note that the underlying parser, \lyacc,
+requires this file to terminate with a {\tt \$}.
+
+The command
+\begin{alltt}
+process_file "theoryfile"
+\end{alltt}
+will parse the file, check its well-formedness, and output the
+appropriate \lclam files. The names of the files are determined by
+the line
+\begin{alltt}
+Theory <name>.
+\end{alltt}
+in the theory file, which results in {\tt <name>theory.\{sig,mod\}}. 
+
+Finally, you then have to fit these files in with your version of
+lambda clam (by setting the appropriate accumulates) and compile the
+whole system. Note that the compilation files themselves should not be
+compiled with \lclam.
+
+
+\subsection{Parsing}\label{parsing}
+
+The logic file is first parsed into abstract syntax. The parser is
+implemented using 
+\lyacc\footnote{See {\tt http://www.cs.hofstra.edu/\~{ }cscccl/parsergen/.}}, 
+a parser-generator written in \lprolog, due to Chuck Liang. It
+generates bottom-up {\em shift-reduce} parsers, which can be less
+intuitive than top-down parsers, but are more efficient.
+
+The user specifies their logic by writing various predicates and rules
+in a \lprolog file, which accumulates the \lyacc files.
+
+\begin{enumerate}
+\item Declare grammar symbols for the abstract syntax for each nonterminal.
+\item Declare the terminals.
+\item Give concrete syntax for the terminals using {\tt printname}.
+\item List the terminals, and nonterminals.
+\item Set {\tt ntnum} to the number of nonterminals plus 1.
+\item
+Give the parse rules, with semantic actions to construct
+the abstract syntax.
+
+For example, rules giving the syntax for axiom declarations are
+\begin{verbatim}
+ rule ((syn_decl_gs D5) ==> 
+        [axiom_decl_gs S7 H1 Z7]) (D5 = axiom_decl S7 H1 Z7),
+
+ rule ((axiom_decl_gs S5 H2 Z5) ==> 
+        [axiomt, axiom_name I6, qprop_gs Z3, periodt]) 
+                                (S5 = I6, Z5 = Z3, H2 = []),
+\end{verbatim}
+The {\tt rule} construct combines a production with a semantic action.
+\item
+Give precedence rules.
+\item Supply freshcopy clauses for non-nullary nonterminals.
+\end{enumerate}
+
+
+This file is compiled, and then executed. Then, a generate parser
+command is called, which, assuming \lyacc accepts the file, generates
+{\em another} file. This file is then compiled to give the parser, all
+of which takes about a minute in total.
+
+
+\subsection{Well-formedness}\label{well-formedness}
+
+A consequence of the fact that the semantic actions attached to \lyacc
+parse rules cannot contain implications (and that \lprolog does not
+have assertions), is that well-formedness of the resulting abstract
+syntax has to be checked in a separate pass.
+
+However, logically inspired manipulation of terms such as this is what
+\lprolog does best.  For example, well-formedness of existentials and
+abstractions is checked by
+\begin{verbatim}
+well_formed_assertion (app exists (tuple [T, abs P])) :-
+        well_formed_type T,
+        pi X \ (new_const X T) => well_formed_assertion (P (user_object X)). 
+
+well_typed_term (ty_abs T L) (T arrow U) :-
+        well_formed_type T,
+        pi X \ (new_const X T) => well_typed_term (L (user_object X)) U.
+\end{verbatim}
+Since declarations are `first-class' in \lprolog, \lprolog's context
+mechanism can be used for managing declarations.
+
+\begin{verbatim}
+well_formed_decls ((inference_decl S Hyps H2 C2)::Ds) :-
+        well_formed_decl (inference_decl S Hyps H2 C2),
+        ((new_inference S) => well_formed_decls Ds).
+
+well_formed_decl (inference_decl S Hyps H2 C2) :-
+        not (new_inference S),
+        map_pred2 group_assertions Hyps Ass,
+        all_pred well_formed_assertions Ass,
+        ly_append H2 [C2] Ps2,
+        well_formed_assertions Ps2,
+        M is "Inference " ^ S ^ "\n",
+        print M.
+\end{verbatim}
+There are no error messages at present.
+
+\subsection{Generation of \lclam}\label{generation}
+Once the theory file has been parsed into abstract syntax and checked
+for well-formedness, it is converted to \lclam format and written to a
+file. Constructing the appropriate higher-order abstract syntax was
+done during parsing, so this stage is mainly concerned with
+abstracting over the variables, and converting propositions to
+rewrites and methods.
+
+The syntax comprises a list of declarations, each of which is
+converted to the corresponding \lclam entity.
+
+\begin{alltt}
+% decl2lclam {\it +sig-file +mod-file +theory-name +logic-name +declaration}
+
+type decl2lclam  out_stream -> out_stream -> string -> string -> syn_decl -> o.
+\end{alltt}
+A syntactic declaration is one of: type, typed constant, axiom,
+inference, conjecture, predicate symbol, definition.  The interesting
+cases are axiom and inference rules. We convert axioms to rewrite
+rules, and inferences to methods.
+
+An example of an axiom is
+\begin{verbatim}
+axiom ax1 [y:nat |- forall f:nat->nat. f = (x:nat \ (f y))].
+\end{verbatim}
+This is parsed as
+\begin{verbatim}
+axiom_decl "ax1" (otype_of (user_object "y") nat :: nil) 
+   (app forall (tuple ((nat arrow nat) :: 
+         abs (W1\ app eq 
+          (tuple (W1 :: ty_abs nat (W2\ app W1 (user_object "y")) :: nil))) ::
+ nil)))
+\end{verbatim}
+and converted to the rewrite rule
+\begin{verbatim}
+axiom nsa ax11 ltor (trueP) 
+   (app forall 
+     (tuple ((nat arrow nat) :: 
+       abs (W1\ app eq (tuple (W1 :: ty_abs nat (W2\ app W1 _107597) :: nil)))
+ :: nil))) 
+    (trueP).
+\end{verbatim}
+
+
+For inference rules, the system generates preconditions to check
+for required antecedents in the conclusion, and to construct the
+antecedents of the hypotheses. The succedent of the conclusion is
+recorded in the form of the method input, and the succedents of the
+hypotheses appear in the output goal.
+
+For example, the inference rule
+\begin{verbatim}
+inference and_l [G,A,B,G' |- P / G, A /\B |- P]
+\end{verbatim}
+parses to abstract syntax
+\begin{verbatim}
+(inference_decl "and_l"
+[(pair [user_object "G", user_object "A", user_object "B", user_object "G'"] 
+       (user_object "P"))]
+[user_object "G", (app and (tuple [user_object "A", user_object "B"])), 
+user_object "G'"] (user_object "P"))
+\end{verbatim}
+which is converted to the atomic method
+\begin{verbatim}
+atomic nsa and_l
+        (seqGoal (H >>> (_9055)))
+        (sublist (app and (tuple (_9072 :: _9088 :: nil)) :: nil) H, 
+        replace_in_hyps H (app and (tuple (_9072 :: _9088 :: nil))) 
+                             (_9072 :: _9088 :: nil) H1)
+        true
+        seqGoal (H1 >>> _9055)
+        notacticyet.
+\end{verbatim}
+The inference rule
+\begin{verbatim}
+inference and_r [G |- A ; G |- B / G |- A /\B]
+\end{verbatim}
+parses to abstract syntax
+\begin{verbatim}
+(inference_decl "and_r"
+[(pair [user_object "G"] (user_object "A")),
+(pair [user_object "G"] (user_object "B"))]
+[user_object "G"] (app and (tuple [(user_object "A"), (user_object "B")]))
+)
+\end{verbatim}
+and converts to
+\begin{verbatim}
+atomic nsa and_r
+        (seqGoal (H >>> (app and (tuple (_5035 :: _5052 :: nil)))))
+        (H =  H1, H =  H2)
+        true
+        seqGoal (H1 >>> _5035) ** seqGoal (H2 >>> _5052)
+        notacticyet.
+\end{verbatim}
+
+
+\subsection{Theory Grammar}\label{grammar}
+
+Identifiers can contain underscores but not hyphens. A theory begins
+with a declaration of its name, and the logic it uses. The logic name
+is not used, but must be entered for syntactic correctness.
+
+\begin{verbatim}
+Theory-declaration ::= 
+        'Theory' Id '.'
+        'Use Logic' Id '.'
+        (Declaration '.')*
+
+Declaration ::= Constant-declaration
+                | Type-declaration
+                | Axiom-declaration
+                | Inference-declaration
+                | Conjecture-declaration
+                | Predicate-declaration
+                | Definition
+
+
+Constant-declaration ::= 'const' Id Type
+
+Type-declaration ::= 'type' Id
+
+Axiom-declaration ::= 'axiom' Id Prop | 'axiom' Id '[' Sequent ']' 
+
+Inference-declaration ::= 'inference' Id '[' Sequents '/' Sequent ']'
+
+Conjecture-declaration ::= 'conjecture' Id '[' Sequent ']'
+
+Predicate-declaration ::= 'predicate' Id Type+
+
+Definition ::= 'define' 'const' Id ':' Type '=' Term
+             | 'define' 'type' Id '=' Type
+
+Sequents ::= (Sequent ';')* Sequent
+
+Sequent ::= Assumptions '|-' Prop
+
+Assumptions ::= (Assumption ',')* Assumption
+
+Assumption ::= Prop | Id ':' Type
+
+Prop ::= 'forall' Id ':' Type '.' Prop
+       | 'exists' Id ':' Type '.' Prop
+       | Prop '/\' Prop
+       | Prop '\/' Prop
+       | Prop '=>' Prop
+       | '<' Term '=' Term '>'
+       | '(' Prop ')'
+       | Id
+       | Id '{' Term '}'
+
+Type ::= nat | bool | '(' Type ')' | Type '->' Type | Type '#' Type | Id
+
+Term ::= Id
+       | (Id ':' type '\' Term ')'
+       | '<' Term Term '>'
+\end{verbatim}
+
+\subsection{Theory file}\label{theory}
+\begin{verbatim}
+Theory Nsa.
+Use Logic Thol.
+
+type real.
+type hyperreal.
+const z nat.
+const f nat->nat#bool.
+
+axiom sch2 [x:nat |- <x=x>].
+axiom sch3 [x:nat, y:nat |- <x=y>].
+axiom sch4 [x:nat, y:nat, <x=y> |- <y=x>].
+axiom ax1 [y:nat |- forall f:nat->nat. <f = (x:nat \ <f y>)>].
+axiom exax exists x:nat. <x=x>.
+axiom badax [true, x:nat |- <x=x>].
+
+conjecture conj1 [x:nat |- forall y:nat . <x=y>].
+inference inf1 [true |- false / true, x:nat |- <x=x>].
+
+axiom qs (forall x:nat. (exists y:nat. <x=y>)) => true.
+
+conjecture conj2 [x:hyperreal |- exists y:hyperreal . <x=y>].
+
+predicate even : nat.
+predicate close_to : hyperreal, real.
+
+inference easy_inf [true|-true; false|-false / x:nat |- <x=x>].
+
+axiom pred_in_prop even{z}.
+
+define type real_pair = real#real.
+
+define const n:nat#bool = <f z>.
+
+define const m:nat = z.
+
+axiom false_e [G1, false, G2 |- P].
+
+inference and_r [G |- A; G |- B / G |- A /\ B].
+
+inference and_l [G1,A,B,G2 |- P / G1, A /\B,G2 |- P].
+
+inference or_l [G,A |- P; G,B |- P / G, A\/B |- P].
+\end{verbatim}
+
+\subsection{Generated \lclam}\label{lclam}
+\begin{verbatim}
+module nsatheory.
+
+all_pred P nil.
+all_pred P (H::T) :- P H, all_pred P T.
+sublist Xs Ys :- all_pred (X\ (member X Ys)) Xs.
+
+has_otype nsa real universe.
+has_otype nsa hyperreal universe.
+has_otype nsa z (nat).
+has_otype nsa f (nat arrow tuple_type (nat :: bool :: nil)).
+axiom nsa sch21 ltor (trueP) (_135695) (_135695).
+
+axiom nsa sch22 ltor (trueP) (app eq (tuple (_137129 :: _137129 :: nil))) 
+(trueP).
+
+axiom nsa sch31 ltor (trueP) (_137732) (_137749).
+
+axiom nsa sch41 ltor (app eq (tuple (_139400 :: _139383 :: nil))) (_139383) 
+(_139400).
+
+axiom nsa sch42 ltor (app eq (tuple (_144856 :: _144839 :: nil))) (app eq 
+(tuple (_144839 :: _144856 :: nil))) (trueP).
+
+axiom nsa ax11 ltor (trueP) (app forall (tuple ((nat arrow nat) :: abs (W1\ 
+app eq (tuple (W1 :: ty_abs nat (W2\ app W1 _147505) :: nil))) :: nil))) 
+(trueP).
+
+axiom nsa exax1 ltor (trueP) (app exists (tuple (nat :: abs (W1\ app eq (tuple
+ (W1 :: W1 :: nil))) :: nil))) (trueP).
+
+axiom nsa badax1 ltor (trueP) (_148474) (_148474).
+
+axiom nsa badax2 ltor (trueP) (app eq (tuple (_149926 :: _149926 :: nil))) 
+(trueP).
+
+top_goal nsa conj1 [(otype_of (user_object "x") nat)] (app forall (tuple (nat 
+:: abs (W1\ app eq (tuple (user_object "x" :: W1 :: nil))) :: nil))).
+atomic nsa inf1
+        (seqGoal (H >>> (app eq (tuple (_152632 :: _152632 :: nil)))))
+        (sublist (trueP :: otype_of (user_object "x") nat :: nil) H)
+        true
+        (seqGoal (H1 >>> falseP))
+        notacticyet.
+
+axiom nsa qs1 ltor (trueP) (trueP) (app forall (tuple (nat :: abs (W1\ app 
+exists (tuple (nat :: abs (W2\ app eq (tuple (W1 :: W2 :: nil))) :: nil))) :: 
+nil))).
+
+axiom nsa qs2 ltor (trueP) (app imp (tuple (app forall (tuple (nat :: abs (W1\
+ app exists (tuple (nat :: abs (W2\ app eq (tuple (W1 :: W2 :: nil))) :: 
+nil))) :: nil)) :: trueP :: nil))) (trueP).
+
+top_goal nsa conj2 [(otype_of (user_object "x") (user_object "hyperreal"))] 
+(app exists (tuple (user_object "hyperreal" :: abs (W1\ app eq (tuple 
+(user_object "x" :: W1 :: nil))) :: nil))).
+atomic nsa easy_inf
+        (seqGoal (H >>> (app eq (tuple (_156487 :: _156487 :: nil)))))
+        (sublist (otype_of (user_object "x") nat :: nil) H, replace_in_hyps H 
+(otype_of (user_object "x") nat) (falseP :: nil) H1, replace_in_hyps H 
+(otype_of (user_object "x") nat) (trueP :: nil) H2)
+        true
+        (seqGoal (H1 >>> trueP) ** seqGoal (H2 >>> falseP))
+        notacticyet.
+
+axiom nsa pred_in_prop1 ltor (trueP) (app (user_object "even") (user_object 
+"z")) (trueP).
+
+definition nsa real_pair0 trueP (tuple_type (user_object "real" :: user_object
+ "real" :: nil)) real_pair.
+definition nsa n0 trueP (app (user_object "f") (user_object "z")) n.
+definition nsa m0 trueP (user_object "z") m.
+atomic nsa false_e
+        (seqGoal (H >>> (_25170637)))
+        (sublist (falseP :: nil) H)
+        true
+        trueGoal
+        notacticyet.
+
+atomic nsa and_r
+        (seqGoal (H >>> (app and (tuple (_162845 :: _162862 :: nil)))))
+        (true, H =  H1, H =  H2)
+        true
+        (seqGoal (H1 >>> _162845) ** seqGoal (H2 >>> _162862))
+        notacticyet.
+
+atomic nsa and_l
+        (seqGoal (H >>> (_186518)))
+        (sublist (app and (tuple (_186535 :: _186551 :: nil)) :: nil) H, 
+replace_in_hyps H (app and (tuple (_186535 :: _186551 :: nil))) (_186567 :: 
+_186535 :: _186551 :: _186583 :: nil) H1)
+        true
+        (seqGoal (H1 >>> _186518))
+        notacticyet.
+
+atomic nsa or_l
+        (seqGoal (H >>> (_197214)))
+        (sublist (app or (tuple (_197231 :: _197247 :: nil)) :: nil) H, 
+replace_in_hyps H (app or (tuple (_197231 :: _197247 :: nil))) (_197247 :: 
+nil) H1, replace_in_hyps H (app or (tuple (_197231 :: _197247 :: nil))) 
+(_197231 :: nil) H2)
+        true
+        (seqGoal (H1 >>> _197214) ** seqGoal (H2 >>> _197214))
+        notacticyet.
+
+end
+
+\end{verbatim}
+
+

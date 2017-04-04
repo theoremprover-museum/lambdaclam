@@ -1,0 +1,115 @@
+This version of FTL especially reflects what we say
+in the paper for ICTL 2000.
+
+------------------------- notes:
+
+(1) until operator has been rubbed out
+(2) entailment procedure is now completely automatic
+(3) use of constraints (no MMW system)
+(4) tactics:    no track of the assumption / conclusion used
+                prettyprinting inside
+(5) time module has incremental axioms for properties of wafter
+        - well-foundedness
+        - reflexivity
+        - transitivity
+        - convergency
+        - linearity (?)
+        - discreteness (?)
+(6) to prove formulae which rely on induction, e.g.
+        (w and (next (glob w))) imp (glob w)
+    need the naive induction rule.
+    Apart from this, it proves ALL Manna's formulae
+    which do not contain until
+
+------------------------- problems:
+
+- clauses for linearity are correct / complete?
+        so far t1 wafter t2 is allowed, unless we can prove t2 after t1.
+
+- clauses for discreteness? what relationsip with clauses for s?
+        CAN PROVE t IS GREATER THAN ANY NUMBER! TO BE REFINED!!
+
+- can't prove (glob (next w)) iff (next (glob w)): need extra
+        unification algorithm and predecessor function!
+
+------------------------- module dependencies:
+
+basics
+syntax
+
+time            accumulates basics
+                accumulates syntax
+
+examples        accumulates syntax
+
+tactics         imports time
+prover          accumulates basics
+                accumulates syntax
+                accumulates tactics
+                accumulates examples
+
+------------------------- proof of correctness of SR flip-flop:
+
+----> Proof found!
+r_imp
+ (l_and
+   (l_and
+     (l_and
+       (l_and
+         (l_neg
+           (r_glob z
+             (t1\
+               l_glob z t1
+                (l_iff
+                  (l_glob z t1
+                    (l_iff
+                      (l_glob z t1
+                        (l_imp
+                          (l_imp
+                            (r_neg
+                              (l_and
+                                (l_imp (axiom (fQ @ t1))
+                                  (l_neg
+                                    (l_imp (r_neg (axiom (fP and fS @ t1)))
+                                      (r_iff (r_imp (axiom (fP @ t1)))
+                                        (r_imp (l_neg (axiom (fQ @ t1))))))))))
+                            (axiom (fP @ t1)))
+                          (l_neg
+                            (l_imp (r_neg (axiom (fQ and fR @ t1)))
+                              (l_imp
+                                (l_imp
+                                  (r_neg
+                                    (l_and
+                                      (r_iff (r_imp (r_neg (axiom (fQ @ t1))))
+                                        (r_imp (axiom (fP @ t1))))))
+                                  (axiom (fQ @ t1)))
+                                (l_neg
+                                  (l_imp (r_neg (axiom (fP and fS @ t1)))
+                                    (r_iff
+                                      (r_imp
+                                        (r_neg
+                                          (r_and (axiom (fP @ t1))
+                                            (r_and (axiom (fQ @ t1))
+                                              (l_or (axiom (fS @ t1))
+                                                (axiom (fR @ t1)))))))
+                                      (r_imp (axiom (fP @ t1))))))))))
+                        (entail (t1 wafter z))))
+                    (entail (t1 wafter z))))
+                (entail (t1 wafter z)))))))))
+
+F =
+ glob (fQ iff neg (fP and fS)) and glob (fP iff neg (fQ and fR))
+  and
+  glob (fS or fR)
+  and
+  fQ
+  and
+  neg fP
+  imp
+  glob (fP iff neg fQ) 
+
+-------------------------
+
+Closed May, 17th, 2000
+Submitted to ICTL2000
+Claudio Castellini

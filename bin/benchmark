@@ -1,0 +1,218 @@
+#!/bin/bash
+#
+# benchmark [-timeout secs (default don't time out)] 
+# [-script filename (default lclam_test)] [-dir directory (default tests)]
+#
+# Run benchmark over (predetermined) list of theorems.
+#
+# Timeout argument indicates how long each lambdaclam process should be
+# allowed before timing out.
+#
+# Most of the tests will not use the script value (bug ...) 
+
+export timeout="-timeout 1200"
+export test_program=lclam_test
+export report_dir=$LCLAM_HOME/tests
+
+if [ "$1" == "-timeout" ]; then  export timeout="-timeout $2" ; fi
+if [ "$3" == "-timeout" ]; then  export timeout="-timeout $4" ; fi
+if [ "$5" == "-timeout" ]; then  export timeout="-timeout $6" ; fi
+if [ "$1" == "-script" ] ; then  export test_program=$2 ; fi
+if [ "$3" == "-script" ] ; then  export test_program=$4 ; fi
+if [ "$5" == "-script" ] ; then  export test_program=$6 ; fi
+if [ "$1" == "-dir" ]    ; then  export report_dir=$2 ; fi
+if [ "$3" == "-dir" ]    ; then  export report_dir=$4 ; fi
+if [ "$5" == "-dir" ]    ; then  export report_dir=$6 ; fi
+
+# reporting procedure
+
+makereport () {
+    $LCLAM_HOME/bin/report $report_dir/$1.tex 
+    $LCLAM_HOME/bin/report $report_dir/$1.tex >> $report_dir/report.tex
+              }
+# normal test routine
+
+runmarks () {
+    $LCLAM_HOME/bin/lclam_test_lib $* $timeout >& $report_dir/$1.tex
+    }
+
+# >& $report_dir/$1.tex
+            
+
+# get time information
+
+DATE=`date`
+
+# Latex top information
+
+PREAMBLE="\\documentclass{article}\n\
+\\usepackage{supertabular,a4}\n\
+\\\\begin{document}\n\
+\\section*{\$\\lambda\$Clam timings} \n\
+Run on $HOSTNAME ($HOSTTYPE), started $DATE.\\\\\\\\ \n\
+Timings in minutes and seconds. Fail means failed proof attempt. \n\
+N means proof attempt did not fail cleanly \n\
+(e.g.\\ it gave a segmentation fault). \n\
+\\\\begin{center}\\\\begin{supertabular}[t]{llp{2in}} \n\
+Theorem & Time (User CPU) & Note\\\\\\\\ \n"
+
+# set up reporting document:
+
+# first make the directory
+
+if [ -d $report_dir ] ; then
+    echo using existing directory ${report_dir}.
+    else echo trying to make directory ${report_dir}. 
+	 mkdir $report_dir
+fi
+
+# overwrite what was there before, if anything
+
+echo "" > $report_dir/report.tex
+
+# initiate the report
+
+echo -e $PREAMBLE >> $report_dir/report.tex
+
+# run the benchmarks
+
+for x in taut1 taut2 ; do
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/$test_program $x '(induction_top with_critics)' $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in exptimesord expplusord asspord plus0ord distord assmord times1ord ; do
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' ordinal $timeout >& $report_dir/$x.tex 
+    makereport $x
+done 
+
+for x  in  fun_iter_g1 fun_iter_g2 whisky_problem whisky_problem2 whisky_problem3 whisky_gen_problem; do 
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' whisky $timeout  >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in times2ord exp2ord times1leftord plus1rightord exp1ord exp1ord2 ; do
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' ordinal $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in assapp all_list all_list_cv all_list_sy allList_and_dist allList_and_dist_cv ; do
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/$test_program $x '(induction_top with_critics)' $timeout >& $report_dir/$x.tex  >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in expplus eqzero simple simple_taut assp comm comp plus2right dist distr assm leqrefl leqsuc leqsum plus1lem plusxx zeroplus zerotimes doubleplus halfdouble doubletimes times2right doubletimes2; do 
+   echo Trying to prove $x.
+   $LCLAM_HOME/bin/$test_program $x '(induction_top with_critics)' $timeout >& $report_dir/$x.tex 
+   makereport $x
+done
+
+for x in app1right apporev cnc_app cnc_cons cnc_cons2 comapp lenorev lensum memapp2 memapp3 nthmem nthnil orevorev singleorev tailorev tailorev2 lendouble appatend simple_sy memapp; do
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' map_benchmarks $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in countsort evenodd1 evenodd2  geqdouble geqdoublehalf geqhalf geqnotlessp greatercons greaterplus greaterplus2 greaterplus3 greaters greaters2 greaterss lensort less_double_mono less_double_mono2 lessleq1 lessleq2 lesss memins meminsert1 meminsert2 memsort1 memsort2 memintersect memunion1 memunion2 minmax minmaxgeq notlesstrans notlesstrans2 ordered_cons plusgeq plusgeq2 plusless subsetintersect subsetunion; do
+echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' clam_corpus  $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in minus_plus minus_pred minus_succ ; do
+echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' clam_corpus3  $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in cnc_pl1 cnc_s comp2 dedthm evendouble evenp identrm leqdouble leqhalf leqhalfdouble leqdupl foldapp plus1right qrev_correct_gen orevmapcar times1right zerotimes1 zerotimes2 cnc_last prod_times prodl fac_less; do
+echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' clam_corpus2  $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+
+for x in qrevcorrect ; do
+echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' list_benchmarks  $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x  in filapp mapcarapp mapdouble mapfoldr mapthm lenmap ; do 
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' map_benchmarks $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in revqrevlemmaplan orevqrevplan ; do
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclamthtest ex2 $x $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in dividesthm ; do
+    echo Trying to prove $x.
+     $LCLAM_HOME/bin/lclamthtest ex3 $x $timeout >& $report_dir/$x.tex
+     makereport $x
+done
+
+for x in lim_plus_thm ; do
+echo Trying to prove $x.
+     $LCLAM_HOME/bin/lclam_test_lib $x lim_plus_meth lim_plus $timeout >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x  in icT28 icT29 icT30 icT31 icT32 icT33 icT34 icT35; do 
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' ireland_critics $timeout  >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x  in  icT3 icT6 icT7 icT11; do 
+    echo Trying to prove $x.
+    $LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' ireland_critics_lemma_spec $timeout  >& $report_dir/$x.tex 
+    makereport $x
+done
+
+for x in synthesis_thm tcons sg_cons sg_app sg_syn4 sg_asps sg_half; do
+	echo Trying to prove $x.
+	$LCLAM_HOME/bin/lclam_test_lib $x '(induction_top exi)' smaill_green_syn_ex $timeout >& $report_dir/$x.tex
+	makereport $x
+done
+
+for x in maxhtgeqminht tipcountswap swapswap flattenswap lengthflattentree swapmaptree; do
+	echo Trying to prove $x.
+	$LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' yoshidaetal $timeout >& $report_dir/$x.tex
+	makereport $x
+done
+
+for x in assapp4 assapp3; do
+	echo Trying to prove $x.
+	$LCLAM_HOME/bin/lclam_test_lib $x '(induction_top sym_eval_crit)' pdd_list_test $timeout >& $report_dir/$x.tex
+	makereport $x
+done
+
+for x in meta_ripple dist_unblock cancel_thm; do
+    echo Trying to prove $x.
+	$LCLAM_HOME/bin/lclam_test_lib $x '(induction_top with_critics)' ripple_book $timeout >& $report_dir/$x.tex
+	makereport $x
+done
+
+for x in dieter_unblock; do
+    echo Trying to prove $x.
+	$LCLAM_HOME/bin/lclam_test_lib $x '(induction_top wave_rpo_measure)' ripple_book $timeout >& $report_dir/$x.tex
+	makereport $x
+done
+
+
+
+# add closing latex commands to report
+
+echo \\end\{supertabular\}\\end\{center\} >> $report_dir/report.tex
+echo \\end\{document\} >> $report_dir/report.tex
+

@@ -1,0 +1,6 @@
+#load "syntax.mod".
+#load "basics.mod".
+#load "time.mod".
+#load "tactics.mod".
+#load "examples.mod".
+#load "prover.mod".

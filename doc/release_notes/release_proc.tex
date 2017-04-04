@@ -1,0 +1,73 @@
+\documentclass[11pt]{article}
+
+\begin{document}
+
+\title{$\lambda$-Clam: Release Procedure} 
+
+\author{James Brotherston}
+
+\date{August 23, 2002}
+
+\maketitle
+
+\noindent Now you too can release an official version of $\lambda$-Clam in just
+10 easy steps:
+
+\begin{enumerate}
+\item Write a release note detailing the changes made since the last
+  release.  Store it with the other release notes in the CVS
+  repository under {\tt lambda-clam-teyjus/doc/release\_notes}.  You
+  will need to add the file(s) to the CVS repository using the command
+  {\tt cvs add <filename>}.
+\item The way the version number changes depends on the number and
+  type of changes made since the last release.  At time of writing,
+  the current version is v4.0.0.  If the changes made are mostly bug
+  fixes and minor improvements, the new version would be v4.0.1; if
+  the release incorporated new features or more major changes then the
+  new version would be v4.1.0.  Generally the first number only
+  increases when wholesale changes have been made or, as has happened
+  in the past, the whole system has been rewritten in a different language.
+\item Ensure all the benchmarks run OK.  To compile the benchmarks, go
+  to {\tt lambda-clam-teyjus/src} and type {\tt make allclean}
+  followed by {\tt make benchmarks}.  One or two of the files being
+  compiled might report ``Access to unmapped memory'' or something
+  similar, in which case you should comment / uncomment (as
+  applicable) the `dummy predicate' in the top file being compiled.
+  
+  To run the benchmarks, go to {\tt lambda-clam-teyjus/bin} and type
+  {\tt . benchmark -timeout 600}. This will run the benchmark set with
+  a time limit per theorem of 600 seconds (10 minutes), which should
+  be adequate for the theorems in the benchmark set at time of
+  writing.  The whole thing will probably take an hour or two on a
+  local machine; once it's finished, a summary report will be in {\tt
+    lambda-clam-teyjus/tests/report.tex}.  Convert this to .ps if you
+  want and check that all the benchmarks plan successfully --- the
+  ones that don't will have an N next to their time measurement.  The
+  only one that should have the N is {\tt falsearith}, although
+  currently the theorems all\_list\_cv and allList\_and\_dist are
+  failing too (running out of memory at the ripple analysis stage).
+\item Ensure the manual is up to date.  The $\lambda$-Clam manual
+  files are in {\tt lambda-clam-teyjus/doc}.
+\item Make sure that all the changes to CVS have been committed
+  (including the updated manual and release note). Committing files is
+  just a matter of {\tt cvs commit <filenames>}.
+\item From {\tt lambda-clam-teyjus}, tag the new version in the CVS
+  repository using the command {\tt cvs tag lclamv4-x-y} with {\tt
+    x} and {\tt y} replaced by the appropriate numbers for the new
+  version (see item 2).
+\item From your home directory, make a tarball of the CVS distribution
+  of $\lambda$-Clam using the command: \\ {\tt tar cf
+    lambda-clam4.x.y.tar lambda-clam-teyjus} \\ \noindent and then zip
+  it using {\tt gzip lambda-clam4.x.y.tar}.
+\item The $\lambda$-Clam webpage is accessible at: \\ {\tt
+    /usr/local/reason/htdocs/software/systems/lambda-clam} \\  From here,
+  put PS copies of the release note and of the manual in the directory
+  {\tt docs}, and the gzipped $\lambda$-Clam tarball in {\tt src}.
+  Then update the main page ({\tt index.html}) to point to all these things.
+\item Send an e-mail to {\tt dreamers@dai} announcing the new release.
+\item Leave for the rest of the day.
+
+\end{enumerate}
+
+
+\end{document}

@@ -1,0 +1,338 @@
+\chapter{Benchmarking --- $\lambda$Clam timings}
+
+\section{\lclam\ v4.0.0 timings, 28th August 2002, Edinburgh}
+Note that the testing for v4.0.0 was done on one of the DREAM group's
+standard Sun Ultra 10s and not a Linux box.  The two failed benchmarks
+all\_list\_cv and allList\_and\_dist run out of memory at the ripple
+analysis stage --- apparently this is not a problem under Linux.
+
+Run on clunie (sparc), started Wed Aug 28 15:00:20 BST 2002.\\ 
+Timings in minutes and seconds. Fail means failed proof attempt. 
+N means proof attempt did not fail cleanly 
+(e.g.\ it gave a segmentation fault). 
+\begin{center}\begin{supertabular}[t]{llp{2in}} 
+Theorem & Time (User CPU) & Note\\ 
+
+taut1 & 0m0.16s & \\
+taut2 & 0m0.26s & \\
+exptimesord & 4m21.06s & \\
+expplusord & 3m3.96s & \\
+asspord & 0m14.05s & \\
+plus0ord & 0m3.92s & \\
+distord & 0m48.68s & \\
+assmord & 1m33.33s & \\
+times1ord & 0m6.84s & \\
+times2ord & 0m4.73s & \\
+exp2ord & 0m8.26s & \\
+times1leftord & 0m6.87s & \\
+plus1rightord & 0m0.67s & \\
+exp1ord2 & 0m7.73s & \\
+assapp & 0m11.67s & \\
+all\_list & 0m25.53s & \\
+all\_list\_cv & N 0m2.24s & \\
+all\_list\_sy & 0m0.50s & \\
+allList\_and\_dist & N 0m2.19s & \\
+allList\_and\_dist\_cv & 0m25.53s & \\
+expplus & 9m3.57s & \\
+eqzero & 0m0.13s & \\
+simple & 0m0.34s & \\
+simple\_taut & 0m0.14s & \\
+assp & 0m20.42s & \\
+comm & 7m57.30s & \\
+comp & 1m28.31s & \\
+falsearith & N 0m41.31s & \\
+plus2right & 0m9.01s & \\
+dist & 2m39.78s & \\
+distr & 4m40.66s & \\
+assm & 6m41.97s & \\
+plus1lem & 0m3.33s & \\
+doubletimes & 1m12.30s & \\
+times2right & 2m26.68s & \\
+plusxx & 0m0.54s & \\
+doubleplus & 1m6.26s & \\
+doubletimes2 & 0m13.75s & \\
+app1right & 0m6.27s & \\
+apporev & 1m21.52s & \\
+cnc\_cons & 0m2.82s & \\
+cnc\_cons2 & 0m2.50s & \\
+comapp & 1m42.26s & \\
+lenorev & 0m24.02s & \\
+lensum & 0m10.68s & \\
+memapp2 & 0m39.31s & \\
+memapp3 & 1m4.29s & \\
+nthmem & 3m35.76s & \\
+nthnil & 0m0.65s & \\
+singleorev & 0m0.91s & \\
+tailorev & 0m23.36s & \\
+tailorev2 & 0m1.33s & \\
+appatend & 0m23.04s & \\
+memapp & 0m44.48s & \\
+simple\_sy & 0m0.33s & \\
+evenodd1 & 0m11.12s & \\
+evenodd2 & 0m11.12s & \\
+geqnotlessp & 1m38.64s & \\
+greatercons & 0m9.79s & \\
+greaters & 0m7.04s & \\
+greaters2 & 1m36.02s & \\
+less\_double\_mono & 1m39.68s & \\
+less\_double\_mono2 & 1m39.99s & \\
+lessleq1 & 1m37.94s & \\
+lessleq2 & 1m38.52s & \\
+lesss & 0m7.38s & \\
+plusgeq & 1m45.41s & \\
+minus\_pred & 0m13.04s & \\
+minus\_succ & 0m14.87s & \\
+cnc\_pl1 & 0m30.32s & \\
+cnc\_s & 0m1.86s & \\
+dedthm & 0m0.89s & \\
+evendouble & 0m2.26s & \\
+evenp & 0m24.11s & \\
+identrm & 0m18.97s & \\
+comp2 & 0m54.40s & \\
+plus1right & 0m5.94s & \\
+leqdupl & 1m13.19s & \\
+foldapp & 0m30.85s & \\
+qrev\_correct\_gen & 2m44.84s & \\
+times1right & 0m6.12s & \\
+qrevcorrect & 0m59.58s & \\
+filapp & 0m24.55s & \\
+mapcarapp & 0m14.20s & \\
+mapthm & 0m8.50s & \\
+lenmap & 0m4.26s & \\
+lim\_plus\_thm & 2m1.66s & \\
+synthesis\_thm & 4m1.00s & \\
+revqrevlemmaplan & 0m6.44s & \\
+orevqrevplan & 0m3.69s & \\
+dividesthm & 0m1.18s & \\
+fun\_iter\_g1 & 0m0.73s & \\
+fun\_iter\_g2 & 0m18.79s & \\
+whisky\_problem & 0m7.94s & \\
+whisky\_problem2 & 0m11.44s & \\
+whisky\_problem3 & 0m15.84s & \\
+whisky\_gen\_problem & 0m5.86s & \\
+icT6 & 0m18.44s & \\
+icT7 & 2m7.60s & \\
+\end{supertabular}\end{center}
+
+\section{\lclam\ timings, 2nd November 2001, Nottingham}
+I include these, not because I've done much to alter the scope or speed of the system but to note that it runs {\em significantly} faster on a Pentium 3 based Linux box than on the MRG groups dual processor Sun.
+
+Run on bartok.cs.nott.ac.uk (i386), started Fri Nov 2 12:37:48 GMT 2001.\\ 
+Timings in minutes and seconds. Fail means failed proof attempt. 
+N means proof attempt did not fail cleanly 
+(e.g.\ it gave a segmentation fault). 
+\begin{center}\begin{supertabular}[t]{llp{2in}} 
+Theorem & Time (User CPU) & Note\\ 
+taut1 & 0m0.05s & \\
+taut2 & 0m0.08s & \\
+exptimesord & 1m21.76s & \\
+expplusord & 0m57.26s & \\
+asspord & 0m4.01s & \\
+plus0ord & 0m0.89s & \\
+distord & 0m14.63s & \\
+assmord & 0m29.03s & \\
+times1ord & 0m1.65s & \\
+times2ord & 0m1.17s & \\
+exp2ord & 0m1.93s & \\
+times1leftord & 0m1.64s & \\
+plus1rightord & 0m0.16s & \\
+exp1ord2 & 0m1.85s & \\
+assapp & 0m1.91s & \\
+all\_list & 0m5.08s & \\
+all\_list\_cv & 0m8.53s & \\
+all\_list\_sy & 0m0.10s & \\
+allList\_and\_dist & 0m8.51s & \\
+allList\_and\_dist\_cv & 0m5.08s & \\
+expplus & 0m45.73s & \\
+eqzero & 0m0.07s & \\
+simple & 0m0.08s & \\
+simple\_taut & 0m0.04s & \\
+assp & 0m1.95s & \\
+comm & 0m24.58s & \\
+comp & 0m4.27s & \\
+falsearith & N 2m0.75s & \\
+plus2right & 0m1.15s & \\
+dist & 0m23.51s & \\
+distr & 0m18.34s & \\
+assm & 0m29.97s & \\
+plus1lem & 0m0.47s & \\
+doubletimes & 0m10.00s & \\
+times2right & 0m9.07s & \\
+plusxx & 0m0.13s & \\
+doubleplus & 0m9.11s & \\
+app1right & 0m0.88s & \\
+apporev & 0m14.38s & \\
+cnc\_cons & 0m0.72s & \\
+cnc\_cons2 & 0m0.63s & \\
+comapp & 0m11.18s & \\
+lenorev & 0m5.50s & \\
+lensum & 0m2.22s & \\
+memapp2 & 0m7.66s & \\
+memapp3 & 0m12.90s & \\
+nthnil & 0m0.17s & \\
+singleorev & 0m0.24s & \\
+tailorev & 0m5.45s & \\
+tailorev2 & 0m0.33s & \\
+appatend & 0m3.93s & \\
+memapp & 0m8.59s & \\
+evenodd1 & 0m2.43s & \\
+evenodd2 & 0m2.45s & \\
+greatercons & 0m2.10s & \\
+greaters & 0m0.88s & \\
+lesss & 0m0.87s & \\
+minus\_pred & 0m2.90s & \\
+minus\_succ & 0m3.30s & \\
+cnc\_pl1 & 0m4.59s & \\
+cnc\_s & 0m0.40s & \\
+dedthm & 0m0.17s & \\
+doubletimes2 & 0m7.30s & \\
+evendouble & 0m0.44s & \\
+evenp & 0m4.63s & \\
+identrm & 0m3.10s & \\
+comp2 & 0m9.28s & \\
+plus1right & 0m0.76s & \\
+foldapp & 0m5.74s & \\
+qrev\_correct\_gen & 0m30.47s & \\
+times1right & 0m1.35s & \\
+qrevcorrect & 0m10.34s & \\
+filapp & 0m6.54s & \\
+mapcarapp & 0m3.29s & \\
+mapthm & 0m2.30s & \\
+lenmap & 0m1.11s & \\
+lim\_plus\_thm & 0m31.96s & \\
+synthesis\_thm & 0m23.28s & \\
+revqrevlemmaplan & 0m1.68s & \\
+orevqrevplan & 0m1.00s & \\
+dividesthm & 0m0.33s & \\
+fun\_iter1plan & 0m0.12s & \\
+fun\_iter2plan & 1m31.96s & \\
+\end{supertabular}\end{center}
+
+\section{$\lambda$Clam timings, 21st March 2001}
+Timings in minutes and seconds. Fail means failed proof attempt. N means proof attempt did not fail cleanly (e.g. it gave a segmentation fault).
+
+\begin{center}\begin{supertabular}[t]{llp{2in}}
+Theorem & Time (CPU mins:secs) & Note\\
+plus0ord & 6.1 & \\
+asspord & 46.1 & \\
+times1ord & 8.8 & \\
+times2ord & 7.3 & \\
+exp2ord & 10.4 & \\
+times1leftord & 8.9 & \\
+plus1rightord & 0.7 & \\
+exp1ord2 & 10.0 & \\
+eqzero & 0.2 & \\
+simple & 0.4 & \\
+simple\_taut & 0.1 & \\
+distord & 2:26.6 & \\
+assp & 10.2 & \\
+falsearith & Fail 0.8 & \\
+plus2right & 1.0 & \\
+comp & 16.7 & \\
+\end{supertabular}
+
+\begin{supertabular}[t]{llp{2in}}
+plus1lem & 0.8 & \\
+dist & 31.9 & \\
+doubletimes & 7.2 & \\
+comm & 1:11.2 & \\
+expplus & 2:04.0 & \\
+assapp & 10.9 & \\
+all\_list\_sy & 1.2 & \\
+all\_list & 17.1 & \\
+times2right & 39.7 & \\
+all\_list\_cv & 23.5 & \\
+assm & 1:03.1 & \\
+allList\_and\_dist & 23.5 & \\
+allList\_and\_dist\_cv & 17.1 & \\
+exptimes & 3:08.4 & \\
+app1right & 6.3 & \\
+distr & 1:31.7 & \\
+assmord & 4:50.1 & \\
+cnc\_cons & 3.9 & \\
+cnc\_cons2 & 3.3 & \\
+allList\_or\_left & 52.5 & \\
+allList\_or\_right & 52.6 & \\
+apporev & 1:06.5 & \\
+lenorev & 24.3 & \\
+\end{supertabular}
+
+\begin{supertabular}[t]{llp{2in}}
+comapp & 47.1 & \\
+nthnil & 0.8 & \\
+lensum & 37.0 & \\
+memapp2 & 27.5 & \\
+singleorev & 1.3 & \\
+memapp3 & 44.7 & \\
+tailorev2 & 1.9 & \\
+tailorev & 25.1 & \\
+appatend & 22.7 & \\
+expplusord & 9:12.1 & \\
+exptimesord & N & \\
+memapp & 30.3 & \\
+filapp & 37.1 & \\
+mapcarapp & 20.1 & \\
+mapthm & 15.3 & \\
+lenmap & 5.9 & \\
+revqrevlemmaplan & 10.0 & \\
+orevqrevplan & 6.3 & \\
+dividesthm & 1.4 & \\
+taut1 & 0.1 & \\
+taut2 & 0.2 & \\
+\end{supertabular}\end{center}
+
+Comment.  Extended benchmarking set and removed all the failures to a new fulltests set, all attempted using induction with critics and it is pleasing to note that this hasn't had a drastic effect on time or success rate.
+
+
+
+
+\section{$\lambda$Clam timings Prolog Mail}
+For comparison here are the timings for \lclam.v2.0.0 which was
+written in prolog mali. 
+
+\begin{center}\begin{supertabular}[t]{llp{2in}}
+allList\_and\_dist & 11.5 & \\
+allList\_and\_dist\_cv & 18.6 & \\
+allList\_omember & 4.1 & \\
+allList\_or\_left & 2.2 & \\
+allList\_omember\_imp1 & Fail 40.6 & \\
+all\_list & 18.5 & \\
+all\_list\_cv & 11.6 & \\
+all\_list\_sy & 3.9 & \\
+allList\_or\_right & Fail 2:18.4 & \\
+assapp & 5.4 & \\
+assm & 29.0 & \\
+assmord & 45.5 & \\
+assp & 4.6 & \\
+assp\_sy & Fail 20.5 & \\
+asspord & 6.5 & \\
+comm & Fail 11.1 & \\
+comp & 3.6 & \\
+dist & 26.9 & \\
+distord & 22.8 & \\
+distr & 29.2 & \\
+expplus & 56.1 & \\
+falsearith & Fail 1.0 & \\
+leqrefl & 1.0 & \\
+expplusord & 1:06.7 & \\
+leqreflord & 1.4 & \\
+exptimes & N 1:05.5 & \\
+leqsuc & 1.1 & \\
+leqsucord & Fail 3.9 & \\
+exptimesord & N 1:26.9 & \\
+plus2right & 1.4 & \\
+simple & 0.9 & \\
+simple\_sy & 1.4 & \\
+simple\_taut & 0.3 & \\
+times1ord & 2.1 & \\
+\end{supertabular}\end{center}
+
+\section{Remarks}
+It should be noted that the new versions of \lclam\ are approximately 
+2 to 3 times slower than the Mali version.  However the 29th November
+version is less memory
+hungry which allows it to plan exptimesord without
+running out of space.  This seems to have degraded somewhat by the
+most recent version but we should attempt to recover it.
+
+Note also that we can not yet manage synthesis proofs.

@@ -1,0 +1,95 @@
+\documentclass{book}
+\usepackage{supertabular}
+\usepackage{a4}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{dream}
+\usepackage{latexsym}
+\usepackage{alltt}
+\usepackage{epsf}
+\usepackage{epsfig}
+\usepackage{url}
+
+\newcommand{\lam}[1]{\lambda{#1}.\;}
+\newcommand{\pageline}{\rule{\textwidth}{0.5mm}}
+\newcommand{\restricted}{\upharpoonright}
+\newcommand{\module}[1]{\mbox{\tt #1}}
+\newcommand{\method}[1]{\mbox{\tt #1}}
+\newcommand{\query}[1]{\mbox{\tt #1}}
+\newcommand{\predicate}[1]{\mbox{\tt #1}}
+\newcommand{\term}[1]{\mbox{\tt #1}}
+\newcommand{\seqsign}[0]{\mbox{$>\!>\!>$}}
+
+\newcommand{\clambda}{coloured $\lambda$\xspace}
+\newcommand{\lambdaclam}{$\lambda$Clam\xspace}
+\newcommand{\eembeds}[0]{\mbox{\raisebox{-.4ex}{$\stackrel{\subset}{\rightarrow}$}}}
+\newcommand{\rewrites}{\leftarrow:\rightarrow}
+\newcommand{\rewritesimp}{:\rightarrow}
+\newcommand{\imp}{\Rightarrow}
+\newcommand{\seq}{\vdash}
+\newcommand{\ind}{\hspace*{8mm}}
+\newcommand{\topline}{\hrule height 0.4pt \vskip 4.6pt\relax}
+\newcommand{\botline}{\vskip 4pt \hrule height 0.4pt \vskip
+  4.6pt\relax}
+\newcommand{\see}[2]{{\em see} #1}
+\newcommand{\xlclam}{X\lclam}
+
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{example}{Example}[chapter]
+\newtheorem{lemma}{Lemma}[chapter]
+
+\makeindex
+
+\begin{document}
+
+\author{James Brotherston \& Louise A. Dennis}
+\title{\lclam\ v.4.0.1: User / Developer's Manual}
+\date{October 11, 2002}
+\maketitle
+\tableofcontents
+
+\include{intro}
+\chapter{Installing and Running \lclam}
+\label{install}
+
+\subsection{Installing \lclam \index{installation|textbf}}
+
+\input{../README}
+\include{tutorial}
+\include{basic}
+\include{core}
+\include{mktheory}
+\include{theories}
+\include{compiler}
+\include{mathweb}
+\include{develop}
+
+\appendix 
+
+\include{benchmark}
+\include{cvs}
+
+\chapter{Credits}
+
+{\lclam} is a collaborative effort, and many people who are not listed
+below have participated in some way. Apart from ourselves, the major
+developers are: Alan Smaill (original version of \lclam, many of the
+existing queries and rewrite rules), Mike Jackson (graphical user
+interface), Andreas Sch\"oter (early \lclam development), Ian Green
+(recursion analysis), David Lacey (conditional rewriting), Julian
+Richardson (persistent proof plan datastructure, many months
+development on \lclam\ 2), Jeremy Gow (critics mechanism), Ewen
+Maclean (nonstandard analysis), Ewen Denney (theory compiler),
+J\"urgen Zimmer (MATHWEB-SB integration), and Claudio Castellini
+(temporal logic prover) as well as other members of the \dream group
+for actual and suggested changes.  Special thanks are also due to
+Gopalan Nadathur and Chuck Liang for their help with, and development
+on, Teyjus Prolog.
+ 
+\bibliographystyle{plain}
+\bibliography{lclambib}
+
+\input{manual.ind}
+
+\end{document}

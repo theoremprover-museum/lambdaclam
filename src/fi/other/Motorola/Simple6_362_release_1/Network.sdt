@@ -1,0 +1,51 @@
+SDT-SYSTEM-3.6
+[DRIVES]
+[SOURCE-TARGET-DIRECTORY]
+[DIAGRAMS]
+0 11 Control_Software_PK Control_Software_PK2.sun 0 1008357660 Control_Software_PK ""
+1 13 Control_Software_BL Control_Software_BL.sbt 0 1008344400 Control_Software_BL ""
+2 5 Control_Software_P1 Control_Software_P2.spr 0 1008708840 Control_Software_P ""
+2 5 Timer_P Timer_P.spr 0 1008344460 Timer_P ""
+0 16 BC BC.msc 0 1011214140 - "0"
+0 1 Network Network.ssy 0 1008283440 Network ""
+1 1002 Control_Software_1 "Control_Software_BL" "" 0
+1 1002 Control_Software_2 "Control_Software_BL" "" 0
+1 1002 Control_Software_3 "Control_Software_BL" "" 0
+1 1002 Control_Software_4 "Control_Software_BL" "" 0
+1 2 Message_Switch Message_Switch.sbk 0 1008283680 Message_Switch ""
+2 5 Message_Switch_P Message_Switch_P2.spr 0 1008695580 Message_Switch_P ""
+1 2 Billing_BL Billing_BL.sbk 0 1008012240 Billing_BL ""
+2 5 Billing_P Billing_P.spr 0 1008012240 Billing_P ""
+0 23 "Analysis Model" %unconnected% 0 0 0 ""
+0 23 "Used Files" %unconnected% 0 0 0 ""
+0 23 "SDL System Structure" %unconnected% 0 0 0 ""
+0 23 "TTCN Test Specification" %unconnected% 0 0 0 ""
+0 23 "Other Documents" %unconnected% 0 0 0 ""
+[VIEWOPTIONS]
+ShowDirectories=True
+ShowLongMenus=True
+[ANALYSEROPTIONS]
+EchoAnalyzerCommands=True
+ExpandPR=True
+Filter=False
+InstanceFile=False
+[H2SDLOPTIONS]
+AllWarnings=False
+Preprocessor=""
+PreprocessorOptions=""
+TranslateEnum=True
+UseFullPath=True
+UsePreprocessorOptions=False
+[MAKEOPTIONS]
+CCompilerDriver=False
+[PRINTOPTIONS]
+DestinationFormat=PSFile
+FirstPageNo=1
+MarginLeft=150
+MarginLower=220
+MarginRight=50
+MarginUpper=100
+PrinterFile=""
+PrintFrom=0
+PrintTo=0
+PrintToFile=False

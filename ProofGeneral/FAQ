@@ -1,0 +1,80 @@
+FAQs for Proof General
+======================
+
+FAQ,v 5.1 2001/08/10 12:58:34 da Exp
+
+For latest version, see http://www.proofgeneral.org/ProofGeneral/FAQ
+
+-----------------------------------------------------------------
+
+Q. I'm afraid I got stuck very early on.  I sent the following line:
+      by (swap_res_tac [psubsetI] 1;
+   Notice that I forgot the right bracket.  The line went pink, the
+   buffer went read-only and nothing I tried would let me fix the
+   error.  
+
+A. The proof process is waiting for more input, but Proof General
+   doesn't realise this and waits for a response.  You
+   should type something in the proof shell, or interrupt the process
+   with C-c C-c or the Stop button.
+
+-----------------------------------------------------------------
+
+Q. How can I keep the Proof General option settings across sessions?
+
+A. Simply use the ordinary XEmacs menu: Options -> Save Options
+
+   In FSF Emacs, you can do M-x customize-save-customized
+   or use the Custom->Save menu in a customize buffer.
+
+-----------------------------------------------------------------
+
+
+Q. I'm using Proof General for prover X, then I load a file for prover Y.
+   The buffer doesn't enter the mode for prover Y.  Why not?
+
+A. Unfortunately the architecture of Proof General is designed so
+   that you can only use one prover at a time in the same Emacs
+   session.   If you want to run more than one prover at a time,
+   you have to run more than one Emacs.
+
+-----------------------------------------------------------------
+
+
+Q. How do I use Proof General for Isabelle/Isar instead of Isabelle classic?
+
+A. There are several ways:
+
+   1. Use the Isabelle settings mechanism, invoke with "Isabelle"
+   2. Set the environment variable PROOFGENERAL_ASSISTANTS=isar
+      before starting Emacs.
+   3. Put the line (* -*- isar -*- *) at the top of your Isar files.
+
+   Unfortunately Isabelle/Isar and Isabelle classic are two quite
+   separate Proof General instances.  Ideally they should be
+   combined into one, if anyone fancies some elisp hacking...
+
+
+-----------------------------------------------------------------
+
+Q. When using X-Symbol, why do I sometimes see funny characters like
+   \233 in the buffer?
+
+A. These are part of the 8 bit character codes used by X Symbol to
+   get symbols from particular fonts.  Sometimes X-Symbol forgets to
+   fontify the buffer properly to make it use the right fonts.
+   To fix, type M-x x-font-lock-fontify-buffer or M-x x-symbol-fontify.
+   If that doesn't work, type M-x font-lock-mode twice to turn
+   font-lock off then on.  Or reload the file.
+   
+   Note that X-Symbol is more robust when used with XEmacs/Mule.
+
+   Read the X-Symbol documentation for (much) more information.
+
+-----------------------------------------------------------------
+
+Q. Can I join any mailing lists for Proof General?
+
+A. Of course, email "majordomo@dcs.ed.ac.uk" with the 
+   lines "subscribe proofgeneral" or "subscribe proofgeneral-devel"
+   in the message body.

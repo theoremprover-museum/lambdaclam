@@ -1,0 +1,70 @@
+-*- outline -*-
+
+* Summary of Changes for Proof General 3.3 from 3.2
+
+** Generic Changes
+
+*** Proof General startup script welcomes user
+ 
+     The "binary" (startup script) bin/proofgeneral now loads
+     PG and invokes a function to display a splash message,
+     which invites the user to load a file.   A bit more
+     friendly than simply being confronted by a standard 
+     XEmacs screen.
+
+*** Changes to Proof General RPM packaging mechanism
+  
+     Can now build RPM packages with "rpm -ta" from tarball source.
+     RPM includes menu file and icons (tested under Linux Mandrake).
+
+*** Addition of visibility control for completed proofs
+
+     You can make proofs invisible using a context sensitive menu
+     (right button on a completed proof), or as soon as they are
+     completed with the "Options -> Disappearing Proofs" option.
+     To reveal all proofs again, use the "Make proofs visible"
+     command.
+
+     [ in progress, feedback welcome ]
+
+*** Command to insert last output as comment in proof script.
+
+     Sometimes it is useful to paste some of the output from
+     goals or response buffer into the proof script.  A new
+     function `pg-insert-last-output-as-comment' (C-c C-;)
+     inserts the last output and converts it into a comment
+     using `comment-region'.
+
+*** Compatibility fixes.
+
+     Fixes for FSF Emacs and XEmacs 21.4
+     Better support for win32 versions of XEmacs (see README.windows).
+
+*** Bug fixes.
+
+     XEmacs 21.1 has faulty implementation of buffer-syntactic-context,
+     workaround added.  (Symptom was parsing breaking, giving unexpected
+     "I can't see any complete commands to process!" error message, esp
+     with strings broken across lines containing parentheses).
+
+** Coq Changes
+
+     Compatibility for V7 added.
+
+     Experimental enhancements to handling of compiled files and 
+     file dependency:
+
+     1) At the end of scripting foo.v (i.e. when activing scripting is
+     switched off), "Reset Initial. Compile Module <foo>" is
+     automatically issued. This clears the context and writes a .vo file,
+     to keep your .vo files up to date. It means that when using PG Coq, 
+     you should use the correct commands ("Require foo.") to load all
+     the modules you depend on, so that scripting can continue in the
+     next file.
+
+** Changes for developers to note
+
+*** proof-shell-process-output now sets proof-shell-last-output and
+    proof-shell-last-output-kind which gives clearer interface internally
+    and with rest of code.   See docs.
+  

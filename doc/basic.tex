@@ -1,0 +1,1889 @@
+\chapter{Using \lclam}
+\label{basic}
+
+\section{Introduction}
+Proof planning\index{proof planning} in \lclam\ basically works as
+follows.  A goal\index{goal} is presented to the system, expressed
+using terms\index{term} which may have types\index{term type} (the
+terms are not supposed to be tied down to any particular logic
+although there is an implicit assumption throughout \lclam\ that we
+are working within a sequent calculus\index{sequent calculus}).
+
+A plan\index{proof plan} is formed to find a proof of this goal at
+some level of abstraction (usually above the level of basic inference
+rules\index{inference rule}, but not necessarily so).  This plan is
+formed using methods\index{method} placed within a
+waterfall\index{method!waterfall}.  The waterfall determines a general
+strategy\index{proof strategy} for the process of the proof and
+imposes a hierarchy\index{method!method hierarchy} upon the methods.
+This means that only certain methods are considered as viable ways to
+extend the plan at certain points in a proof.  There are two sorts of
+method, compound\index{method!compound} and
+atomic\index{method!atomic}.  Compound methods determine the structure
+of the waterfall.  When a compound method is being attempted only its
+{\em submethods}\index{method!submethod} can be considered and the
+compound may even impose a specific order in which the submethods
+should be attempted.  In this way, for example, the {\tt
+  step\_case}\index{method!step case} method for
+induction\index{induction} ensures that
+rippling\index{rippling!method} is not attempted unless appropriate
+meta-level annotations\index{meta-level annotation} have been put into
+place.  Atomic methods have pre-conditions\index{precondition} and
+effects\index{effect} (or post-conditions).  If all of an atomic
+method's pre-conditions are satisfied then it is applied and the
+effects are used to determine the new goal on which planning should be
+attempted.
+
+{\em If we want to come more into line with the OMEGA description of
+  proof planning then we should also consider compound methods as
+  atomic methods at a higher level of abstraction.  The submethods of
+  the compound method would then be the tactic that justified that
+  node\index{proof node!justification}.  There are obviously some
+  practical problems with this (e.g. we often need to execute the
+  submethods to determine the output of the compound methods).
+  
+  We might also want to consider a return to the original proof
+  planning spec. where post-conditions had a larger role than simply
+  the calculation of output.  Do we have any good examples where it
+  would have been useful to have some extra information expressed
+  (other than as annotations on the goal) where an explicit
+  post-condition would have been useful?}
+
+In theory the plan constructed by the methods and the planning
+mechanism is a tree\index{proof tree} each node\index{proof node} of
+which is justified by a tactic\index{tactic}.  This plan is a proof at
+some level of abstraction.  The proof can be expanded at a lower level
+by executing the tactics at the nodes and so on until the plan is a
+tree whose nodes are justified by axioms and inference rules in some
+logic.  In practice \lclam\ produces just one plan and there is no way
+at present to execute the nodes\index{proof node!execution of} and get
+a proof at a lower level of abstraction.
+
+\section{Running \lclam}
+
+\begin{enumerate}
+\item  Add the following paths to {\tt TJPATH}\index{TJPATH}:
+
+  \begin{tabular}{l}
+  {\verb+$LCLAM_HOME/src/util+} \\
+  {\verb+$LCLAM_HOME/src/theories+} \\
+  {\verb+$LCLAM_HOME/src/planner+} \\
+  {\verb+$LCLAM_HOME/src/compiler+} \\
+  {\verb+$LCLAM_HOME/src/theories/tutorial+} \\
+  {\verb+$LCLAM_HOME/src/io+}
+  {\verb+$LCLAM_HOME/src/syntax+}
+  {\verb+$LCLAM_HOME/src/core_theories+}
+  {\verb+$LCLAM_HOME/src/interface+}
+\end{tabular}
+
+\item Type \verb+$LCLAM_HOME/bin/lclam+
+\end{enumerate}
+
+We advise you run \lclam\ from within emacs (and preferably using the
+supplied ProofGeneral interface) since \lclam\ generates a lot of
+output.  A sample small proof is shown below.
+
+\begin{small}
+\begin{verbatim}
+[lad@bartok lambda-clam-teyjus]$ $LCLAM_HOME/bin/lclam
+lclam:
+pds_plan taut taut1.
+planning 
+taut1
+GOAL:
+>>> (obj -> obj)
+ADDRESS: nil
+
+Attempting... 
+Method application:  taut
+succeeded
+
+GOAL:
+>>> (obj -> obj)
+ADDRESS: nil
+
+Attempting... 
+trivial
+failed
+Attempting... 
+false_e
+failed
+Attempting... 
+neg_i
+failed
+Attempting... 
+neg_e
+failed
+Attempting... 
+Method application:  imp_i
+succeeded
+
+GOAL:
+obj
+>>> obj
+ADDRESS: 1 :: nil
+
+Attempting... 
+Method application:  trivial
+succeeded
+
+GOAL:
+trueGoal!
+ADDRESS: 1 :: 1 :: nil
+
+Attempting... 
+branch closed!
+
+reached empty agenda
+
+Plan found (not displayed) ...
+Plan Succeeded
+lclam:
+\end{verbatim}
+\end{small}
+
+
+\section{\lclam\ Operation}
+Below are the basic command line\index{command line} options for
+running \lclam. 
+
+\subsection{Miscellaneous}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt quit}
+\end{Large}\index{quit}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{{\tt type quit o.}}
+
+\subsubsection*{Synopsis}
+Quits out of \lclam.  
+
+\subsubsection*{Description}
+This will return you to the prolog prompt.
+
+\subsubsection*{See Also}
+{\tt halt}\index{halt}
+
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt halt}
+\end{Large}
+\index{halt}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{{\tt type halt o.}}
+
+\subsubsection*{Synopsis}
+Quits out of \lclam\ and \lprolog.
+
+\subsubsection*{See Also}
+{\tt quit}\index{quit}
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt reset\_lclam}
+\end{Large}\index{reset\_lclam}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{{\tt type reset\_lclam o.}}
+
+\subsubsection*{Synopsis}
+Restores the default settings of \lclam.  The reset command clears the
+induction schemes list, the sym\_eval list, the general list and the
+wave rule list. \\
+
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt step\_by\_step}
+\end{Large}\index{step\_by\_step}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type step\_by\_step switch -> o.}
+
+\subsubsection*{Synopsis}
+Switches step by step planning\index{planning!step by step} on and off.
+
+\subsubsection*{Description}
+The switch\index{switch} type can have two values {\tt on}\index{on}
+or {\tt off}\index{off}.  
+
+\subsubsection*{Examples}
+{\tt step\_by\_step on.}
+
+\noindent This will switch \lclam\ into step by step mode.
+
+\noindent {\tt step\_by\_step off.}
+
+\noindent This will switch \lclam\ into automatic mode.
+
+\subsubsection*{See Also}
+{\tt continue}\index{continue}. \\
+\noindent {\tt abandon}\index{abandon}. \\
+\noindent {\tt backtrack}\index{backtrack}. \\
+\noindent {\tt plan\_node}\index{plan\_node}. \\
+\noindent {\tt try}\index{try}. \\
+
+\subsection{Output control}
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt interaction\_mode}
+\end{Large}\index{interaction\_mode}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type interaction\_mode interaction -> o.}
+
+\subsubsection*{Synopsis}
+Changes the output options (e.g. switches on or off pretty printing).
+
+\subsubsection*{Description}
+Currently interaction\index{interaction} type can have two values {\tt
+  command}\index{command} (print to command line) or {\tt
+  command\_pretty}\index{command\_pretty} (pretty print to command
+line).   Mostly you will want the mode set to {\tt command\_pretty}
+which is the default.  Occasionally this suffers memory problems in
+long proofs in which case the {\tt command} option can be used to
+enable the plan to go through.
+
+There is also an {\tt xbmode}\index{xbmode} intended for use with a
+graphic interface.  This has not been fully implemented yet.
+
+\subsubsection*{Examples}
+
+{\tt interaction\_mode command.}
+
+\noindent This will switch off the pretty printer, simply printing the raw
+\lclam\ syntax to the command line. \\
+
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt plan\_printing}
+\end{Large}\index{plan\_printing}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type plan\_printing switch -> o.}
+
+\subsubsection*{Synopsis}
+Switches printing of plans\index{plan!printing} on and off.
+
+
+\subsubsection*{Description}
+The switch\index{switch} type can have two values, {\tt on}\index{on}
+or {\tt off}\index{off}.  
+
+\subsubsection*{Examples}
+{\tt plan\_printing on.}
+
+\noindent This will switch \lclam\ into a mode where it prints out the 
+proof plans once tthey are found.
+
+\noindent {\tt plan\_printing off.}
+
+\noindent This will switch \lclam\ into a mode where it doesn't print plans.  This is the default. \\
+
+\vspace{2mm} \hrule \vspace{2mm}
+\begin{Large}
+\noindent{\tt silent\_mode}
+\end{Large}\index{silent\_mode}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type silent\_mode o.}
+
+\subsubsection*{Synopsis}
+Switches \lclam into silent output mode.  Silent mode
+suppresses output from failed method applications and backtracking
+attempts.
+
+
+\vspace{2mm} \hrule \vspace{2mm}
+\begin{Large}
+\noindent{\tt super\_silent\_mode}
+\end{Large}\index{super\_silent\_mode}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type super\_silent\_mode o.}
+
+\subsubsection*{Synopsis}
+Switches \lclam into super-silent output mode.  Super-silent mode
+works like silent mode but also suppresses goal printing, which can be
+useful when dealing with very large goals.
+
+\vspace{2mm} \hrule \vspace{2mm}
+\begin{Large}
+\noindent{\tt verbose\_mode}
+\end{Large}\index{verbose\_mode}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type verbose\_mode o.}
+
+\subsubsection*{Synopsis}
+Switches \lclam into verbose output mode, which is the default.  In
+verbose mode all goal, method and backtracking information is
+displayed.
+
+\subsection{Planning}
+
+\hrule \vspace{2mm}
+\noindent
+\begin{Large}{\tt plan\_this}
+\end{Large}\index{plan\_this}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+{\tt type plan\_this (plan\_state -> (action -> plan\_state -> plan\_state -> o) -> plan\_state -> o) 
+   -> meth
+   -> query
+   -> (action -> plan\_state -> plan\_state -> o) -> o.
+}
+
+\subsubsection*{Synopsis}
+Starts a plan.
+
+\subsubsection*{Description}
+This is the top level call for starting planning.  It has four
+arguments.  The first argument is the planner being used.  There are
+currently two planners built into the system, {\tt
+  pds\_planner}\index{pds\_planner} and {\tt
+  pds\_iter\_planner}\index{pds\_iter\_planner}.  Both are partial
+data structure planners which can be run in normal and interactive
+modes; the former is a basic depth-first planner whereas the latter
+performs an iterative deepening search.  It is also possible to build
+in a naive depth-first planner {\tt df\_plan}\index{df\_plan} is a
+depth-first planner, which can not be run interactively.  The second
+argument is the top method\index{method!top} the third the goal
+query\index{goal}\index{query} and the last is the predicate which
+will control composition of
+agendas\index{agenda!predicate}\index{agenda!manipulation of} and
+hence the search strategy\index{search strategy}.  Only one search
+strategy is currently implemented {\tt
+  depth\_first\_plan}\index{depth\_first\_plan}.
+
+When the planner is executing it returns some basic information by
+default.  This is the name of the method the planner is currently
+attempting to apply and the name of the method it has succeeded in
+applying.
+
+The planner generates quite a lot of output \index{proof
+  planner!output}.  When it attempt to extend the plan at a given
+node\index{plan node} the planner prints the goal\index{goal} at that
+node and the address in the plan\index{node address} of the node.  It
+then records the names of each method it applies at that node and
+whether they succeeded or failed.  It also reports when it backtracks
+over a method application (see the section 4.3.2 for information on
+suppressing some of this output).
+
+When a critic\index{critic} is going to be invoked the planner also
+prints out the instantiations of all method
+preconditions\index{method!precondition} and records whether they
+succeeded or failed.  This can be used for debugging new methods.
+
+In general it will be easier to use one of the wrapper functions such
+as {\tt pds\_plan}\index{pds\_plan} or {\tt
+  pds\_iter\_plan}\index{pds\_iter\_plan}.
+
+\subsubsection*{Examples}
+{\tt plan\_this pds\_planner taut taut1 depth\_first\_plan.} 
+
+\noindent This will apply the tautology method\index{tautology}, {\tt
+  taut}\index{taut}, to the goal {\tt taut1}\index{taut1}.
+
+\noindent {\tt plan\_this pds\_planner (then\_meth (then\_meth sym\_eval
+  trivial) triv\_meth) eqzero depth\_first\_plan.} 
+
+\noindent This applies the method {\tt  (then\_meth (then\_meth sym\_eval
+  trivial)
+  triv\_meth)}\index{then\_meth}\index{sym\_eval}\index{trivial},
+(rewrite exhaustively and then look for the goal in the hypotheses),
+to the query {\tt eqzero}\index{eqzero}. \\
+
+
+\subsubsection*{See Also}
+{\tt pds\_plan}\index{pds\_plan}. \\
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt pds\_plan}
+\end{Large}\index{pds\_plan}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type pds\_plan meth -> query -> o}
+
+\subsubsection*{Synopsis}
+Starts a plan.
+
+\subsubsection*{Description}
+This is a wrapper for {\tt plan\_this}\index{plan\_this} which applies
+the PDS planner\index{PDS planner} using depth-first
+search\index{depth-first seach}.  It has two arguments.  The first
+argument is the top method\index{method!top} and the second is the
+goal query\index{goal}\index{query}.
+
+When the planner is executing it returns some basic information by
+default.  This is the name of the method the planner is currently
+attempting to apply and the name of the method it has succeeded in
+applying.
+
+The planner generates quite a lot of output \index{proof
+  planner!output}.  When it attempt to extend the plan at a given
+node\index{plan node} the planner prints the goal\index{goal} at that
+node and the address in the plan\index{node address} of the node.  It
+then records the names of each method it applies at that node and
+whether they succeeded or failed.  It also reports when it backtracks
+over a method application (see the section 4.3.2 for information on
+suppressing some of this output).
+
+When a critic\index{critic} is going to be invoked the planner also
+prints out the instantiations of all method
+preconditions\index{method!precondition} and records 
+whether they succeeded or failed.  This can be used for debugging new
+methods.  
+
+\subsubsection*{Examples}
+{\tt pds\_plan (induction\_top with\_critics) assp.} 
+
+\noindent This will apply the induction top method\index{induction} with
+critics\index{critic} to the associativity of plus\index{associativity
+  of plus}, {\tt assp}\index{assp}.
+
+\noindent {\tt pds\_plan (then\_meth (then\_meth sym\_eval trivial) triv\_meth) eqzero.} 
+
+\noindent This applies the method {\tt  (then\_meth (then\_meth sym\_eval
+  trivial)
+  triv\_meth)}\index{then\_meth}\index{sym\_eval}\index{trivial},
+(rewrite exhaustively and then look for the goal in the hypotheses),
+to the query {\tt eqzero}\index{eqzero}.
+
+\subsubsection*{See Also}
+{\tt plan\_this}\index{plan\_this}. \\
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt pds\_iter\_plan}
+\end{Large}\index{pds\_iter\_plan}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type pds\_iter\_plan meth -> query -> o}
+
+\subsubsection*{Synopsis}
+Starts a plan using the PDS iterative deepening planner.
+
+\subsubsection*{Description}
+{\tt pds\_iter\_plan} works exactly like {\tt pds\_plan} but uses the
+iterative deepening planner instead of the standard depth-first
+planner.  The default configuration uses an initial depth limit of 3
+and a depth increment of 2 after each pass.  At the moment these
+variables are hard-coded in but they may be included as command line
+arguments in the future if there is user demand for it.  The depth of
+the current plan node is also displayed in the planning output after the 
+node address. \\
+
+\noindent Call the iterative deepening planner with the command
+\texttt{pds\_iter\_plan [method] [goal]}.  If a spypoint is set at the top
+method (\texttt{set\_spypoint my\_top\_meth}) this will have the effect
+of asking the user whether to continue at each new iteration.
+
+\subsubsection*{See Also}
+{\tt pds\_plan}\index{pds\_plan}. \\
+\noindent {\tt plan\_this}\index{plan\_this}. \\
+\noindent {\tt set\_spypoint}\index{set\_spypoint}. \\
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt claudio\_plan}
+\end{Large}\index{claudio\_plan}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type claudio\_plan meth -> query -> plan\_state -> o}
+
+\subsubsection*{Synopsis}
+Starts a plan using the Claudio PDS planner.
+
+\subsubsection*{Description}
+{\tt claudio\_plan} plans the goal using the same mechanism as {\tt pds\_plan} but, unlike {\tt pds\_plan}, is able to return the plan as a metavariable.
+
+\noindent Call the Claudio planner with the command
+\texttt{claudio\_plan [method] [goal] X}, which will bind X to the
+final plan state.
+
+\subsubsection*{See Also}
+{\tt pds\_plan}\index{pds\_plan}. \\
+\noindent {\tt plan\_this}\index{plan\_this}. \\
+\noindent {\tt claudio\_iter\_plan}\index{claudio\_iter\_plan}. \\
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt claudio\_iter\_plan}
+\end{Large}\index{claudio\_iter\_plan}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type claudio\_iter\_plan meth -> query -> plan\_state -> o}
+
+\subsubsection*{Synopsis}
+Starts a plan using the Claudio iterative deepening planner.
+
+\subsubsection*{Description}
+{\tt claudio\_iter\_plan} works exactly like {\tt claudio\_plan} but uses the
+iterative deepening planner instead of the standard depth-first
+planner.  The default configuration uses an initial depth limit of 3
+and a depth increment of 2 after each pass.  At the moment these
+variables are hard-coded in but they may be included as command line
+arguments in the future if there is user demand for it.  The depth of
+the current plan node is also displayed in the planning output after the 
+node address. \\
+
+\noindent Call the Claudio iterative deepening planner with the command
+\texttt{claudio\_iter\_plan [method] [goal] X}, which will bind X to
+the plan state.  If a spypoint is set at the top method
+(\texttt{set\_spypoint my\_top\_meth}) this will have the effect of
+asking the user whether to continue at each new iteration.
+
+\subsubsection*{See Also}
+{\tt pds\_plan}\index{pds\_plan}. \\
+\noindent {\tt plan\_this}\index{plan\_this}. \\
+\noindent {\tt claudio\_plan}\index{claudio\_plan}. \\
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt qed}
+\end{Large}\index{qed}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type qed reasontype -> query -> o}
+
+\subsubsection*{Synopsis}
+Generates a rewrite rule from a query for use in further planning attempts.
+
+\subsubsection*{Description}
+The {\tt qed} command converts a goal to a rewrite rule which can then
+be used in future proofs.  The command syntax is: {\tt qed \{fwd,bwd\}
+  [goal].}  The first argument is used to indicate whether the lemma
+is to be used for forward or backward reasoning, and affects the
+polarity of the rewrite rule generated.  The second argument is the
+goal to be used in generating the rewrite rule.  The name of the
+rewrite rule generated by {\tt qed fwd mygoal} is {\tt
+  user\_rewrite(``mygoal\_fwd'')} (and similarly for {\tt qed bwd}).
+
+Unlike the Isabelle {tt qed} say, $\lambda$-Clam's {\tt qed} does
+\emph{not} require a goal to have been proven before a rewrite can be
+generated from it.  This is in order to allow users to perform `rapid
+prototyping' of large proofs, deferring the proofs of sub-lemmas until
+later in the development.
+
+The rewrite rule is generated from the goal according to the following
+scheme.  Goals in \lclam consist of a list of hypotheses and a
+conclusion, in which variables are explicitly quantified at the object
+level.  A rewrite rule has four main components: a \emph{polarity}
+indicating the direction of the rule, a slot for any side condition on
+the rule, and two slots for the left and right hand sides of the rule.
+Variables which can be instantiated when the rule is applied are
+represented by $\lambda$Prolog metavariables.  The side condition on
+the generated rewrite rule then is just the conjunction of all the
+hypotheses in the goal; typically there are no hypotheses, in which
+case the condition is trivial ({\tt trueP}).  All outer universal
+quantifiers are removed from the conclusion; the quantified variables
+become logical $\lambda$Prolog variables.  The direction of the rule
+is specified by the user (forward reasoning generates left-to-right
+rewrites; backward reasoning generates right-to-left) and is used in
+combination with the main connective of the conclusion
+in determining the left and right hand sides of the rule: \\
+
+\begin{tabular}{cccc}
+Goal & Direction & LHS & RHS \\
+$A \rightarrow B$ & $\Rightarrow$ & A & B \\
+$A \rightarrow B$ & $\Leftarrow$ & B & A \\
+$A \leftrightarrow B$ & $\Rightarrow$ & A & B \\
+$A \leftrightarrow B$ & $\Leftarrow$ & B & A \\
+$A = B$ & $\Rightarrow$ & A & B \\
+$A = B$ & $\Leftarrow$ & B & A \\
+A & Any & A & trueP \\
+\end{tabular} \\
+
+\subsubsection*{Examples}
+{\tt qed bwd mygoal.} 
+
+\noindent This will generate a backwards reasoning lemma {\tt user\_rewrite (``mygoal\_bwd'')} from the goal {\tt mygoal}.
+
+
+\vspace{2mm} \hrule \vspace{2mm}
+\begin{Large}
+\noindent{\tt set\_spypoint}
+\end{Large}\index{set\_spypoint}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type set\_spypoint meth -> o}
+
+\subsubsection*{Synopsis}
+Sets a spypoint.
+
+\subsubsection*{Description}
+When a spypoint is set for a particular method, subsequent planning
+attempts will be interrupted immediately after successful applications
+of that method.  Once interrupted any of the commands normally
+available in step-by-step mode can be attempted (see section 4.3.3).
+
+\subsubsection*{Examples}
+{\tt set\_spypoint sym\_eval.} 
+
+\noindent This will flag the method {\tt sym\_eval} as a spypoint.  
+In subsequent planning attempts, planning will be interrupted
+immediately after successful applications of {\tt sym\_eval}. \\
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt remove\_spypoint}
+\end{Large}\index{remove\_spypoint}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type remove\_spypoint meth -> o}
+
+\subsubsection*{Synopsis}
+Removes a spypoint.
+
+\subsubsection*{Examples}
+{\tt remove\_spypoint sym\_eval.} 
+\noindent This will remove the spypoint for the method {\tt sym\_eval}.  
+
+\subsection{Commands in Step by Step  Mode\index{step by step
+    mode}\index{planning!step by step}\index{commands!step by step
+    mode}}
+
+If you are planning with step by step mode switched on then after
+every plan step you will be shown the newly introduced nodes
+(in fact a cut down version of them) and given a prompt
+
+{\tt Continue Planning?:}\index{Continue Planning?:}
+
+\noindent There are several options at this point.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt continue}
+\end{Large}
+\index{continue}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type continue o.}
+\subsubsection*{Synopsis}
+Tells the planner to continue planning the next step.
+
+\vspace{2mm}
+\hrule
+\begin{Large}
+\noindent{\tt abandon}
+\end{Large}\index{abandon}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type abandon o.}
+
+\subsubsection*{Synopsis}
+Tells the planner to abandon this proof plan attempt entirely.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt backtrack}
+\end{Large}\index{backtrack}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type backtrack o.}
+
+\subsubsection*{Synopsis}
+Tells the planner to backtrack.  
+
+\subsubsection*{Description}
+{\tt backtrack}\index{backtrack} causes \lclam\ to backtrack over the last
+method application.  If the method could succeed in more
+than one way you will get these alternative successes before another
+method is attempted.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt plan\_node}
+\end{Large}\index{plan\_node}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type plan\_node (list int) -> o.}
+
+\subsubsection*{Synopsis}
+Switches planning to the named node.
+
+\subsubsection*{Description}
+{\tt plan\_node}\index{plan\_node} tells the planner to plan next the
+node with the given address. 
+It will only allow you to switch to an  nodes\index{plan node} on the
+current agenda\index{agenda} (i.e. one's to which no
+method\index{method} has been applied) and 
+will return an error message if the address is not that of an node on
+the agenda.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt try}
+\end{Large}
+\index{try}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type try meth -> o.}
+
+\subsubsection*{Synopsis}
+Tells the planner to attempt the given method before it attempts
+the method it would normally apply at this point.  
+
+
+\subsection{Theory Information Database Commands}
+There are a number of sorts of {\em theory information}\index{theory
+  information} which are used in planning but are not a specific part
+of the planning process.  Lots of this information is compiled into
+\lclam\ as part of its internal theory mechanism but more information
+can be added by the user.
+
+To use theory information properly a user will, at present, need to
+understand \lclam's internal syntax\index{internal syntax}.  This is 
+\begin{figure}[htb]
+\begin{verbatim}
+type abs   (osyn -> osyn) -> osyn.
+type app   osyn -> osyn -> osyn.
+type tuple (list osyn) -> osyn.
+
+type arrow      osyn -> osyn -> osyn.
+type tuple_type (list osyn) -> osyn.
+
+type otype_of osyn -> osyn -> osyn.
+\end{verbatim}
+\caption{Constructors for \lclam's internal syntax}
+\label{fig:syntax}
+\end{figure}
+shown in figure~\ref{fig:syntax}.  The internal syntax is based on
+Higher Order Abstract 
+Syntax\index{Higher Order Abstract Syntax} (HOAS)\index{HOAS}.  Basic
+terms (objects of type {\tt osyn}\index{osyn}) can be Prolog variables 
+or constants (e.g. {\tt P} or {\tt plus}).  The constructors {\tt
+  abs}\index{abs}, {\tt app}\index{app} and {\tt tuple}\index{tuple}
+are then used to build up more complex terms.  {\tt app F X}
+applies\index{function application}
+the function {\tt F} to the argument {X}.  If there is more than one
+argument then {\tt tuple} is used, so, for instance 
+{\tt app plus (tuple [1, 2])} represent the term, $1 + 2$.  {\tt abs}
+is used to represent
+$\lambda$-abstraction\index{$\lambda$-abstraction}.  This uses
+\lprolog's internal $\lambda$-abstraction mechanism.  So the function
+$\lambda x. x$ would be {\verb+ abs X\ X+} in \lclam's internal
+syntax.
+
+{\tt otype\_of}\index{otype\_of} is used to assign types to terms and
+{\tt arrow}\index{arrow} and {\tt tuple\_type}\index{tuple\_type} are
+used to construct function types.
+
+
+All theory information is indexed by the name of the theory to which
+it belongs (e.g. arithmetic\index{arithmetic}).  Users may specify
+their own theories as {\tt user\_theory
+  ``string''}\index{user\_theory}. 
+
+
+\subsubsection{Syntax}
+
+Users may specify their own syntax constants using {\tt user\_object
+  ``string''}\index{user\_object}. 
+
+\vspace{2mm}
+\hrule 
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_osyn}
+\end{Large}
+\index{add\_osyn}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type add\_osyn theory -> osyn -> osyn -> o.}
+
+\subsubsection*{Synopsis}
+Adds a new syntactic constant into \lclam.
+
+\subsubsection*{Description}
+{\tt add\_osyn}\index{add\_osyn} takes three arguments: the name of
+the theory that contains the constant, the constant name and the type
+of the constant (expressed in higher order abstract
+syntax\index{Higher Order Abstract Syntax}\index{HOAS}).
+
+This adds the constant with its type and theory information to the
+database.
+
+\subsubsection*{Example}
+{\tt add\_osyn (user\_theory ``mytheory'') (user\_object ``myplus'')
+  ((tuple\_type [nat, nat]) -> nat).} 
+
+This introduces a new constant {\tt user\_object
+  ``myplus''}\index{user\_object}, which is of type $myplus:(nat, nat) 
+\rightarrow nat$ - (i.e. it takes a pair of natural numbers and
+returns a natural number.  This is placed in the user defined theory
+{\tt user\_theory ``mytheory''}\index{user\_theory}.
+
+\vspace{2mm}
+\hrule 
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt query\_osyn}
+\end{Large}\index{query\_osyn}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type query\_osyn theory -> osyn -> osyn -> o.}
+
+\subsubsection*{Synopsis}
+{\tt query\_osyn}\index{query\_osyn} allows the user to query the database for
+information about a syntax constant.  
+
+\subsubsection*{Description}
+Note that the arguments can be
+left as Prolog variables if desired.  You can not (at present)
+backtrack over this so it is impossible to use it (for instance) to
+find all the constants in a given theory.
+
+\subsubsection*{Example}
+Suppose, for instance, given you've added the piece of syntax in the
+example for {\tt add\_osyn}\index{add\_osyn} at the
+command line you could then query it.  A session transcript follows:
+
+\begin{verbatim}
+ordie[src] tjsim lclam.
+Welcome to Teyjus
+
+Copyright (C) 1999 Gopalan Nadathur
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions.  Please view the accompanying file
+"COPYING" for more information.
+[lclam] ?- lclam.
+lclam:
+add_osyn (user_theory "mytheory") (user_object "myplus") 
+                           ((tuple_type [nat, nat]) arrow nat).
+Done
+lclam:
+query_osyn T (user_object "myplus") Type.
+user_theory "mytheory"
+myplus
+tuple_type (nat :: nat :: nil) arrow nat
+lclam:
+\end{verbatim}
+
+\subsubsection{Goals}
+
+Users may specify their own goals using {\tt user\_query ``string''}\index{user\_query}. 
+
+\vspace{2mm}
+\hrule 
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_query}
+\end{Large}\index{add\_query}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type add\_query theory -> query -> (list osyn) -> osyn
+  -> o.}
+
+\subsubsection*{Synopsis}
+Adds a new goal into \lclam.  
+
+\subsubsection*{Description}
+It takes four arguments the name
+of the Theory that contains 
+the goal, the goal name, a list of hypotheses (terms in \lclam's
+internal syntax) and the conclusion (a term in \lclam's
+internal syntax)
+
+This adds the goal to the database.  Proof plan attempts may then be
+made on that goal.  The constructor {\tt
+  user\_query}\index{user\_query} can be used to define new goal names.
+
+\vspace{2mm}
+\hrule 
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt query\_top\_goal}
+\end{Large}\index{query\_top\_goal}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type  query\_top\_goal theory -> query -> o.}
+
+\subsubsection*{Synopsis}
+{\tt query\_top\_goal} allows the user to query the database for
+information about a goal.  
+
+\subsubsection*{Description}
+Note that the arguments can be
+left as Prolog variables if desired.  You can not (at present)
+backtrack over this so it is impossible to use it (for instance) to
+find all the goals in a given theory.
+
+\subsubsection{Rewrite Rules}
+
+Users may specify their own rewrite rule names using {\tt user\_rewrite
+  ``string''}\index{user\_rewrite}. 
+
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_definition}
+\end{Large}\index{add\_definition}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\begin{small}
+\noindent{\tt
+type add\_definition theory -> rewrite\_rule -> osyn -> osyn -> osyn -> o.
+}
+\end{small}
+
+\subsubsection*{Synopsis}
+Adds a definition to the theory database.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_axiom}
+\end{Large}\index{add\_axiom}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\begin{small}
+\noindent{\tt
+type add\_axiom theory -> rewrite\_rule -> direction -> osyn -> osyn -> osyn -> o.
+}
+\end{small}
+
+\subsubsection*{Synopsis}
+Adds and axiom to the theory database.  
+
+\subsubsection*{Description}
+{\tt
+  direction}\index{direction} should be one of {\tt ltor}\index{ltor}, 
+{\tt rtol}\index{rtol} or {\tt equiv}\index{equiv}.  Depending on
+whether the rule\index{rewrite rule} represents an
+implication\index{implication} which holds from {\em left to right},
+{\em right to left} or is an equality.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_lemma}
+\end{Large}\index{add\_lemma}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\begin{small}
+\noindent{\tt
+type add\_lemma theory -> rewrite\_rule -> direction -> osyn -> osyn -> osyn -> o.
+}
+\end{small}
+
+\subsubsection*{Synopsis}
+Adds a lemma to the theory database.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt query\_rewrite\_rule}
+\end{Large}\index{query\_rewrite\_rule}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type query\_rewrite\_rule theory -> rewrite\_rule -> o.
+}
+
+\subsubsection*{Synopsis}
+Returns information about the rewrite rule.
+
+\subsubsection{Methods}
+
+Users may specify their own method names using {\tt user\_method
+  ``string''}\index{user\_method}. 
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_atomic}
+\end{Large}\index{add\_atomic}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\begin{small}
+\noindent{\tt
+type add\_atomic theory -> meth -> goal -> o -> o -> goal -> tactic -> o.
+}
+\end{small}
+
+\subsubsection*{Synopsis}
+Adds an atomic method\index{method!atomic} to the theory database.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_compound}
+\end{Large}\index{add\_compound}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt 
+type add\_compound theory -> meth -> meth -> o -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds a compound method\index{method!compound} to the theory database.
+NB.  compound methods now have precondition\index{precondition} slots.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt query\_method}
+\end{Large}\index{query\_method}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type query\_method theory -> meth -> o.
+}
+
+\subsubsection*{Synopsis}
+Returns information about the method.
+
+\subsubsection{Induction Schemes}
+Users may specify their own scheme names using {\tt user\_scheme
+  ``string''}\index{user\_scheme}. 
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_scheme}
+\end{Large}\index{add\_scheme}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_scheme theory -> scheme -> osyn -> subst -> osyn -> goal -> goal -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds a new induction scheme to the database.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt query\_induction\_scheme}
+\end{Large}\index{query\_induction\_scheme}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type query\_induction\_scheme theory -> scheme -> o.
+}
+
+\subsubsection*{Synopsis}
+Prints out the scheme information.
+
+\subsubsection{List of Rewrites for Symbolic Evaluation\index{symbolic 
+    evaluation}}
+Symbolic Evaluation is done with reference to a (theoretically)
+confluent set of rewrite rules.  By default this list is empty.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_to\_sym\_eval\_list}
+\end{Large}\index{add\_to\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_to\_sym\_eval\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds the named rewrite rules to the symbolic evaluation
+list\index{symbolic evaluation list}.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_from\_sym\_eval\_list}
+\end{Large}\index{delete\_from\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_from\_sym\_eval\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes the named rules from the symbolic evaluation list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt set\_sym\_eval\_list}
+\end{Large}\index{set\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_sym\_eval\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the symbolic evaluation list to the given list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  add\_theory\_to\_sym\_eval\_list}
+\end{Large}\index{add\_theory\_to\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_theory\_to\_sym\_eval\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds all the rewrite rules in the named theory to the symbolic
+evaluation list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt  add\_theory\_defs\_to\_sym\_eval\_list}
+\end{Large}\index{add\_theory\_defs\_to\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_theory\_defs\_to\_sym\_eval\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds all the definitional rewrite rules in the named theory to the symbolic
+evaluation list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_theory\_from\_sym\_eval\_list}
+\end{Large}\index{delete\_theory\_from\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_theory\_from\_sym\_eval\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes all the rewrite rules in the named theory from the symbolic
+evaluation list.
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  set\_theory\_sym\_eval\_list}
+\end{Large}\index{set\_theory\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_theory\_sym\_eval\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the symbolic evaluation list to contain all the rewrite rules in
+the named theory and nothing else.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt query\_sym\_eval\_list}
+\end{Large}\index{query\_sym\_eval\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type query\_sym\_eval\_list o.
+}
+
+\subsubsection*{Synopsis}
+Returns the symbolic evaluation list.
+
+\subsubsection{List of Rewrites for Rewriting\index{rewriting}}
+General rewriting can also be attempted.  This is done with reference
+to a set of rewrite rules\index{rewrite rule}.  By default this list is empty.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_to\_rewrite\_list}
+\end{Large}\index{add\_to\_rewrite\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_to\_rewrite\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds the named rewrite rules to the general rewriting
+list\index{general rewriting list}.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_from\_rewrite\_list}
+\end{Large}\index{delete\_from\_rewrite\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_from\_rewrite\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes the named rules from the general rewriting list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt set\_rewrite\_list}
+\end{Large}\index{set\_rewrite\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_rewrite\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the general rewriting list to the given list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  add\_theory\_to\_rewrite\_list}
+\end{Large}\index{add\_theory\_to\_rewrite\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_theory\_to\_rewrite\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds all the rewrite rules in the named theory to the rewriting
+list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_theory\_from\_rewrite\_list}
+\end{Large}\index{delete\_theory\_from\_rewrite\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_theory\_from\_rewrite\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes all the rewrite rules in the named theory from the  rewriting
+list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  set\_theory\_rewrite\_list}
+\end{Large}\index{set\_theory\_rewrite\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_theory\_rewrite\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the general rewriting list to contain all the rewrite rules in
+the named theory and nothing else.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  query\_general\_rewrites\_list}
+\end{Large}\index{query\_general\_rewrites\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type query\_general\_rewrites\_list o.
+}
+
+\subsubsection*{Synopsis}
+Returns the general rewriting list.
+
+\subsubsection{List of Rewrites for Rippling\index{rippling}}
+Rippling is done with reference
+to a set of rewrite rules\index{rewrite rule}.  By default this list is empty.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt add\_to\_wave\_rule\_list}
+\end{Large}\index{add\_to\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_to\_wave\_rule\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds the named rewrite rules to the wave rule
+list\index{wave rule list}.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_from\_wave\_rule\_list}
+\end{Large}\index{delete\_from\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_from\_wave\_rule\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes the named rules from the wave rule list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt set\_wave\_rule\_list}
+\end{Large}\index{set\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_wave\_rule\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the wave rule list to the given list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  add\_theory\_to\_wave\_rule\_list}
+\end{Large}\index{add\_theory\_to\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_theory\_to\_wave\_rule\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds all the rewrite rules in the named theory to the wave rule list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+{\tt  add\_theory\_defs\_to\_wave\_rule\_list}
+\end{Large}\index{add\_theory\_defs\_to\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_theory\_defs\_to\_wave\_rule\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds all the definitional rewrite rules in the named theory to the wave
+rule list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_theory\_from\_wave\_rule\_list}
+\end{Large}\index{delete\_theory\_from\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_theory\_from\_wave\_rule\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes all the rewrite rules in the named theory from the wave rule list.
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  set\_theory\_wave\_rule\_list}
+\end{Large}\index{set\_theory\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_theory\_wave\_rule\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the wave rule list to contain all the rewrite rules in
+the named theory and nothing else.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt set\_wave\_rule\_to\_sym\_eval}
+\end{Large}\index{set\_wave\_rule\_to\_sym\_eval}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_wave\_rule\_to\_sym\_eval o.
+}
+
+\subsubsection*{Synopsis}
+Sets the wave rule list to whatever is currently in the symbolic
+evaluation list.  
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt query\_wave\_rule\_list}
+\end{Large}\index{query\_wave\_rule\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type query\_wave\_rule\_list o.
+}
+
+\subsubsection*{Synopsis}
+Returns the wave rule list.
+
+\subsubsection{Induction Scheme List}
+Induction is done with reference
+to a set of induction schemes\index{induction scheme}.  By default
+this list is empty. 
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  add\_to\_induction\_scheme\_list}
+\end{Large}\index{add\_to\_induction\_scheme\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_to\_induction\_scheme\_list (list scheme) -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds the named schemes to the induction scheme list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_from\_induction\_scheme\_list}
+\end{Large}\index{delete\_from\_induction\_scheme\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_from\_induction\_scheme\_list (list scheme) -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes the named schemes from the induction scheme list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  set\_induction\_scheme\_list}
+\end{Large}\index{set\_induction\_scheme\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_induction\_scheme\_list (list scheme) -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the induction scheme list to the named schemes.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  add\_theory\_to\_induction\_scheme\_list}
+\end{Large}\index{add\_theory\_to\_induction\_scheme\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_theory\_to\_induction\_scheme\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Add all the schemes in a given theory to the induction scheme list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_theory\_from\_induction\_scheme\_list}
+\end{Large}\index{delete\_theory\_from\_induction\_scheme\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_theory\_from\_induction\_scheme\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes all the schemes in a given theory from the induction scheme list.
+
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  set\_theory\_induction\_scheme\_list}
+\end{Large}\index{set\_theory\_induction\_scheme\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_theory\_induction\_scheme\_list theory -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the induction scheme list to contain all the schemes in the given 
+theory and nothing else.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent {\tt
+  query\_induction\_scheme\_list}
+\end{Large}\index{query\_induction\_scheme\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type query\_induction\_scheme\_list o.
+}
+
+\subsubsection*{Synopsis}
+Returns the induction scheme list.
+
+\subsubsection{User Lemma List}
+The user lemma list is only allowed to contain rewrite rules declared
+in a theory as a \texttt{lemma}.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  add\_to\_user\_lemma\_list}
+\end{Large}\index{add\_to\_user\_lemma\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_to\_user\_lemma\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds the named lemmas to the user lemma list.  The command will fail
+if you attempt to add rewrite rules which have not been declared as
+lemmas (i.e. definitions, axioms, or hypotheses).
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_from\_user\_lemma\_list}
+\end{Large}\index{delete\_from\_user\_lemma\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_from\_user\_lemma\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes the named lemmas from the user lemma list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  set\_user\_lemma\_list}
+\end{Large}\index{set\_user\_lemma\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_user\_lemma\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the user lemma list to the named lemmas. The command will fail
+if you attempt to add rewrite rules which have not been declared as
+lemmas (i.e. definitions, axioms, or hypotheses).
+
+
+
+\subsubsection{User Definition List}
+The user definition list is only allowed to contain rewrite rules declared
+in a theory as a \texttt{definition}.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  add\_to\_user\_defn\_list}
+\end{Large}\index{add\_to\_user\_defn\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type add\_to\_user\_defn\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Adds the named definitions to the user definition list.  The command will fail
+if you attempt to add rewrite rules which have not been declared as
+definitions (i.e. lemmas, axioms, or hypotheses).
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  delete\_from\_user\_defn\_list}
+\end{Large}\index{delete\_from\_user\_defn\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type delete\_from\_user\_defn\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Removes the named definitions from the user definition list.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt
+  set\_user\_defn\_list}
+\end{Large}\index{set\_user\_defn\_list}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt
+type set\_user\_defn\_list (list rewrite\_rule) -> o.
+}
+
+\subsubsection*{Synopsis}
+Sets the user definition list to the named definitions. The command will fail
+if you attempt to add rewrite rules which have not been declared as
+definitions (i.e. lemmas, axioms, or hypotheses).

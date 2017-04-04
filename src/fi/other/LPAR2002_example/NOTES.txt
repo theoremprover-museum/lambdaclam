@@ -1,0 +1,153 @@
+------------------------------------------
+This directory contains BRIDGE
+latest update: September, 2002
+------------------------------------------
+
+-----------------------------------
+Changes made to lclam's source code
+-----------------------------------
+
+theories/rewriting.sig   one patch
+theories/rewriting.mod   four patches
+
+----------------
+FI: ACR vs. CFBL
+----------------
+
+top (box_ (all_ (W1\ all_ (W2\ all_ (W3\ wrap_P1 has_acr W1 and_ (wrap_P2 call_req W2 W1 and_ not_ (wrap_P1 dn_allowed W2)) imp_ wrap_P2 call_req W2 W1 until_ wrap_P2 acr_announce W1 W2 or_ wrap_P1 onhook W2)))) and_ (box_ (all_ (W1\ all_ (W2\ all_ (W3\ wrap_P1 has_cfbl W1 and_ (not_ (some_ (W4\ wrap_P3 forwarding W4 W1 W3)) and_ (wrap_P2 call_req W2 W1 and_ not_ (wrap_P1 idle W1))) imp_ wrap_P2 call_req W2 W1 until_ wrap_P3 forwarding W2 W1 W3 or_ wrap_P1 onhook W2)))) and_ (box_ (all_ (W1\ all_ (W2\ all_ (W3\ not_ (wrap_P2 acr_announce W1 W2 and_ wrap_P3 forwarding W2 W1 W3))))) and_ (box_ (all_ (W1\ all_ (W2\ all_ (W3\ not_ (wrap_P2 acr_announce W1 W2 and_ wrap_P2 call_req W2 W1))))) and_ (box_ (all_ (W1\ all_ (W2\ all_ (W3\ not_ (wrap_P3 forwarding W2 W1 W3 and_ wrap_P2 call_req W2 W1))))) and_ (box_ (all_ (W1\ all_ (W2\ all_ (W3\ not_ (wrap_P1 onhook W2 and_ wrap_P2 call_req W2 W1))))) and_ box_ (all_ (W1\ all_ (W2\ all_ (W3\ not_ (wrap_P1 onhook W2 and_ wrap_P3 forwarding W2 W1 W3)))))))))) imp_ box_ (all_ (W1\ all_ (W2\ all_ (W3\ not_ (wrap_P1 has_acr W1 and_ (wrap_P2 call_req W2 W1 and_ not_ (wrap_P1 dn_allowed W2)) and_ (wrap_P1 has_cfbl W1 and_ (not_ (some_ (W4\ wrap_P3 forwarding W4 W1 W3)) and_ (wrap_P2 call_req W2 W1 and_ not_ (wrap_P1 idle W1))) and_ (wrap_P2 call_req W2 W1 and_ wrap_P2 call_req W2 W1 until_ not_ (wrap_P2 call_req W2 W1) and_ (not_ (wrap_P2 call_req W2 W1) and_ (not_ (wrap_P1 onhook W2) and_ not_ (wrap_P1 onhook W2)))))))))) at_ wrap_T zero).
+
+the tactic employed:
+
+(then_tac (pre r_imp_tac)
+(then_tac (pre l_and_tac)
+(then_tac (pre l_and_tac)
+(then_tac (pre r_glob_tac)
+(then_tac (pre r_forall_tac)
+(then_tac (pre r_forall_tac)
+(then_tac (pre r_forall_tac)
+(then_tac (pre r_neg_tac)
+(then_tac (l_and_tac 1 0)
+(then_tac (l_and_tac 2 0)
+(then_tac (l_glob_tac 5 0)
+(pair_tac
+  (then_tac (l_glob_tac 7 0)
+  (pair_tac
+    (then_tac (pre l_forall_tac)
+    (then_tac (pre l_forall_tac)
+    (then_tac (pre l_forall_tac)
+    (then_tac (pre l_forall_tac)
+    (then_tac (pre l_forall_tac)
+    (then_tac (pre l_forall_tac)
+    (then_tac (pre l_imp_tac)
+    (pair_tac
+      (pre axiom_tac)
+      (then_tac (pre l_imp_tac)
+      (pair_tac
+        (pre axiom_tac)
+        (then_tac (l_weak_tac 5 0)
+        (then_tac (l_weak_tac 3 0)
+        (then_tac (l_until1_tac 3 0 tC)
+        (then_tac (l_until1_tac 4 0 tF1)
+        (then_tac (l_ctra_tac 6 0)
+        (then_tac (conn_tac 0 0 tC tF1)
+        (pair_tac
+
+          (then_tac (l_until2_tac 2 0)                         % ------------ branch #1 (tC < tF1)
+          (pair_tac
+            (then_tac (l_until2_tac 5 0)
+            (pair_tac
+              (then_tac (l_and_tac 7 0)
+              (then_tac (l_neg_tac 1 0) (axiom_tac 2 1)))
+              (pair_tac
+                (then_tac (lbef_tac 5 0) (taxiom_tac 1 1))
+                (taxiom_tac 2 1))))
+            (pair_tac (pre refl_tac) (taxiom_tac 5 1))))
+          (pair_tac
+
+            (then_tac (l_until2_tac 2 0)                       % ------------ branch #2 (tC > tF1)
+            (pair_tac
+              (then_tac (l_until2_tac 5 0)
+              (pair_tac
+                (then_tac (l_and_tac 2 0)
+                (then_tac (l_weak_tac 2 0) (then_tac (l_weak_tac 2 0) (then_tac (l_weak_tac 2 0) 
+                (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0) 
+                (then_tac (lbef_tac 2 0) (then_tac (trans_tac 5 1) (then_tac (l_weak_tac 3 0) 
+
+                (then_tac (repeat_go_tac (pre l_and_tac))
+                (then_tac (pre l_glob_tac) (pair_tac (then_tac (pre l_glob_tac) (pair_tac
+                (then_tac (pre l_glob_tac) (pair_tac (then_tac (pre l_glob_tac) (pair_tac
+                (then_tac (pre l_glob_tac) (pair_tac (then_tac (repeat_go_tac (pre l_forall_tac))
+                sauto_fo_tac)
+                (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))))
+
+                )))))))))))
+              (pair_tac (pre refl_tac) (taxiom_tac 3 1))))
+            (pair_tac (then_tac (lbef_tac 2 0) (taxiom_tac 1 1)) (taxiom_tac 1 1))))
+
+            (then_tac (l_until1_tac 9 0 tF2)                   % ------------ branch #3 (tC = tF1)
+            (then_tac (conn_tac 0 0 tC tF2)
+            (pair_tac
+
+              (then_tac (l_until2_tac 6 0)                     % ------------ branch #4 (tC = tF1, tC < tF2)
+              (pair_tac
+                (then_tac (l_until2_tac 5 0)
+                (pair_tac
+                  (then_tac (l_and_tac 11 0)
+                  (then_tac (l_neg_tac 1 0) (axiom_tac 2 1)))
+                (pair_tac (then_tac (lbef_tac 9 0) (taxiom_tac 1 1)) (taxiom_tac 2 1))))
+              (pair_tac (pre refl_tac) (taxiom_tac 9 1))))
+
+              (pair_tac
+                (then_tac (l_until2_tac 6 0)                   % ------------ branch #5 (tC = tF1, tC > tF2)
+                (pair_tac
+                  (then_tac (l_until2_tac 5 0)
+                  (pair_tac
+                    (then_tac (l_and_tac 2 0)
+                    (then_tac (l_weak_tac 2 0) (then_tac (l_weak_tac 2 0) (then_tac (l_weak_tac 2 0) 
+                    (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0) 
+                    (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0) (then_tac (l_weak_tac 4 0)
+                    (then_tac (lbef_tac 2 0) (then_tac (trans_tac 5 1) (then_tac (l_weak_tac 3 0) 
+
+                    (then_tac (repeat_go_tac (pre l_and_tac))
+                    (then_tac (pre l_glob_tac) (pair_tac (then_tac (pre l_glob_tac) (pair_tac
+                    (then_tac (pre l_glob_tac) (pair_tac (then_tac (pre l_glob_tac) (pair_tac
+                    (then_tac (pre l_glob_tac) (pair_tac (then_tac (repeat_go_tac (pre l_forall_tac))
+                    sauto_fo_tac)
+                    (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))))
+
+                    ))))))))))))))
+                  (pair_tac (pre refl_tac) (taxiom_tac 3 1))))
+                (pair_tac (then_tac (lbef_tac 2 0) (taxiom_tac 1 1)) (taxiom_tac 1 1))))
+
+                (then_tac (l_weak_tac 4 0)                      % ------------ branch #6 (tC = tF1 = tF2)
+                (then_tac (l_weak_tac 5 0) (then_tac (l_weak_tac 7 0) (then_tac (l_weak_tac 9 0)
+                (then_tac (lbef_tac 7 0) (then_tac (trans_tac 10 1) (then_tac (l_weak_tac 3 0) (then_tac (l_weak_tac 5 0) 
+
+                (then_tac (repeat_go_tac (pre l_and_tac))
+                (then_tac (pre l_glob_tac) (pair_tac (then_tac (pre l_glob_tac) (pair_tac
+                (then_tac (pre l_glob_tac) (pair_tac (then_tac (pre l_glob_tac) (pair_tac
+                (then_tac (pre l_glob_tac) (pair_tac (then_tac (repeat_go_tac (pre l_forall_tac))
+                (then_tac (repeat_go_tac (pre l_neg_tac)) (then_tac (repeat_go_tac (pre r_and_tac))
+                sauto_fo_tac
+                )))
+                (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))) (pre taxiom_tac))))
+
+                )))))))))
+              )))))))))))))))))))))
+  (pre taxiom_tac)))
+(pre taxiom_tac))))))))))))).
+
+------------------------ the final result
+------------------------   not in one shot so far: obtained by repeated manual application of the tactic
+------------------------   (then_tac (repeat_go_tac (pre l_or_tac)) (repeat_go_tac (pre axiom_tac)))
+------------------------   to the third branch!
+
+----> Proof found. Formula:
+
+(globF (forallF (W1\ forallF (W2\ forallF (W3\ wrap_P1 has_acr W1 andF (wrap_P2 call_req W2 W1 andF negF (wrap_P1 dn_allowed W2)) impF wrap_P2 call_req W2 W1 untilF wrap_P2 acr_announce W1 W2 orF wrap_P1 onhook W2)))) andF (globF (forallF (W1\ forallF (W2\ forallF (W3\ wrap_P1 has_cfbl W1 andF (negF (existsF (W4\ wrap_P3 forwarding W4 W1 W3)) andF (wrap_P2 call_req W2 W1 andF negF (wrap_P1 idle W1))) impF wrap_P2 call_req W2 W1 untilF wrap_P3 forwarding W2 W1 W3 orF wrap_P1 onhook W2)))) andF (globF (forallF (W1\ forallF (W2\ forallF (W3\ negF (wrap_P2 acr_announce W1 W2 andF wrap_P3 forwarding W2 W1 W3))))) andF (globF (forallF (W1\ forallF (W2\ forallF (W3\ negF (wrap_P2 acr_announce W1 W2 andF wrap_P2 call_req W2 W1))))) andF (globF (forallF (W1\ forallF (W2\ forallF (W3\ negF (wrap_P3 forwarding W2 W1 W3 andF wrap_P2 call_req W2 W1))))) andF (globF (forallF (W1\ forallF (W2\ forallF (W3\ negF (wrap_P1 onhook W2 andF wrap_P2 call_req W2 W1))))) andF globF (forallF (W1\ forallF (W2\ forallF (W3\ negF (wrap_P1 onhook W2 andF wrap_P3 forwarding W2 W1 W3)))))))))) impF globF (forallF (W1\ forallF (W2\ forallF (W3\ negF (wrap_P1 has_acr W1 andF (wrap_P2 call_req W2 W1 andF negF (wrap_P1 dn_allowed W2)) andF (wrap_P1 has_cfbl W1 andF (negF (existsF (W4\ wrap_P3 forwarding W4 W1 W3)) andF (wrap_P2 call_req W2 W1 andF negF (wrap_P1 idle W1))) andF (wrap_P2 call_req W2 W1 andF wrap_P2 call_req W2 W1 untilF negF (wrap_P2 call_req W2 W1) andF (negF (wrap_P2 call_req W2 W1) andF (negF (wrap_P1 onhook W2) andF negF (wrap_P1 onhook W2)))))))))))
+
+----> is proved by:
+
+r_imp_rule (l_and_rule (l_and_rule (r_glob_rule z (W1\ r_forall_rule (W2\ r_forall_rule (W3\ r_forall_rule (W4\ r_neg_rule (l_and_rule (l_and_rule (l_glob_rule z W1 (l_glob_rule z W1 (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule (_18446 W1 W2 W3 W4) (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule W4 (l_imp_rule (axiom_rule (wrap_P1 has_cfbl W2 andF (negF (existsF (W5\ wrap_P3 forwarding W5 W2 W4)) andF (wrap_P2 call_req W3 W2 andF negF (wrap_P1 idle W2))) atF W1)) (l_imp_rule (axiom_rule (wrap_P1 has_acr W2 andF (wrap_P2 call_req W3 W2 andF negF (wrap_P1 dn_allowed W3)) atF W1)) (l_weak_rule (l_weak_rule (l_until1_rule W1 tC (W5\ l_until1_rule W1 tF1 (W6\ l_ctra_rule (conn_rule (l_until2_rule W1 W1 (l_until2_rule W1 tC (l_and_rule (l_neg_rule (axiom_rule (wrap_P2 call_req W3 W2 atF tC)))) (lbef_rule (taxiom_rule (W1 wbefore tC))) (taxiom_rule (tC before tF1))) (refl_rule W1) (taxiom_rule (W1 before tC))) (l_until2_rule W1 tF1 (l_until2_rule W1 W1 (l_and_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (lbef_rule (trans_rule (l_weak_rule (l_and_rule (l_and_rule (l_and_rule (l_and_rule (l_glob_rule z tF1 (l_glob_rule z tF1 (l_glob_rule z tF1 (l_glob_rule z tF1 (l_glob_rule z tF1 (l_forall_rule (_61805 W1 W2 W3 W4 W5 W6) (l_forall_rule (_62573 W1 W2 W3 W4 W5 W6) (l_forall_rule (_63414 W1 W2 W3 W4 W5 W6) (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule (_66008 W1 W2 W3 W4 W5 W6) (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule (_68736 W1 W2 W3 W4 W5 W6) (l_forall_rule (_69657 W1 W2 W3 W4 W5 W6) (l_forall_rule (_70652 W1 W2 W3 W4 W5 W6) (l_forall_rule (_71613 W1 W2 W3 W4 W5 W6) (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule (_74600 W1 W2 W3 W4 W5 W6) (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (r_and_rule (r_and_rule (r_and_rule (r_and_rule (r_and_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1))) (r_and_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1)))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1))) (r_and_rule (r_and_rule (r_and_rule (r_and_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1))) (r_and_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1)))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF1)))))))))))))))))))))))) (taxiom_rule (z wbefore tF1))) (taxiom_rule (z wbefore tF1))) (taxiom_rule (z wbefore tF1))) (taxiom_rule (z wbefore tF1))) (taxiom_rule (z wbefore tF1)))))))))))))))))) (refl_rule W1) (taxiom_rule (W1 before tF1))) (lbef_rule (taxiom_rule (W1 wbefore tF1))) (taxiom_rule (tF1 before tC))) (l_until1_rule W1 tF2 (W7\ conn_rule (l_until2_rule W1 W1 (l_until2_rule W1 tC (l_and_rule (l_neg_rule (axiom_rule (wrap_P2 call_req W3 W2 atF tC)))) (lbef_rule (taxiom_rule (W1 wbefore tC))) (taxiom_rule (tC before tF2))) (refl_rule W1) (taxiom_rule (W1 before tC))) (l_until2_rule W1 tF2 (l_until2_rule W1 W1 (l_and_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (lbef_rule (trans_rule (l_weak_rule (l_and_rule (l_and_rule (l_and_rule (l_and_rule (l_glob_rule z tF2 (l_glob_rule z tF2 (l_glob_rule z tF2 (l_glob_rule z tF2 (l_glob_rule z tF2 (l_forall_rule (_161710 W1 W2 W3 W4 W5 W6 W7) (l_forall_rule (_162513 W1 W2 W3 W4 W5 W6 W7) (l_forall_rule (_163391 W1 W2 W3 W4 W5 W6 W7) (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule (_166107 W1 W2 W3 W4 W5 W6 W7) (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule W4 (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule W4 (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule (_175162 W1 W2 W3 W4 W5 W6 W7) (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (r_and_rule (r_and_rule (r_and_rule (r_and_rule (r_and_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF2))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2))) (r_and_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF2))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2)))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2))) (r_and_rule (r_and_rule (r_and_rule (r_and_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF2))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2))) (r_and_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF2))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2)))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2))) (axiom_rule (wrap_P2 call_req W3 W2 atF tF2)))))))))))))))))))))))) (taxiom_rule (z wbefore tF2))) (taxiom_rule (z wbefore tF2))) (taxiom_rule (z wbefore tF2))) (taxiom_rule (z wbefore tF2))) (taxiom_rule (z wbefore tF2))))))))))))))))))))) (refl_rule W1) (taxiom_rule (W1 before tF2))) (lbef_rule (taxiom_rule (W1 wbefore tF2))) (taxiom_rule (tF2 before tC))) (l_weak_rule (l_weak_rule (l_weak_rule (l_weak_rule (lbef_rule (trans_rule (l_weak_rule (l_weak_rule (l_and_rule (l_and_rule (l_and_rule (l_and_rule (l_and_rule (l_and_rule (l_and_rule (l_glob_rule z tC (l_glob_rule z tC (l_glob_rule z tC (l_glob_rule z tC (l_glob_rule z tC (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule W4 (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule (_254432 W1 W2 W3 W4 W5 W6 W7) (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule W4 (l_forall_rule W2 (l_forall_rule W3 (l_forall_rule W4 (l_forall_rule (_261738 W1 W2 W3 W4 W5 W6 W7) (l_forall_rule W3 (l_forall_rule (_264004 W1 W2 W3 W4 W5 W6 W7) (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (l_neg_rule (r_and_rule (r_and_rule (r_and_rule (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))))) (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))))) (r_and_rule (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))))) (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))))))) (r_and_rule (r_and_rule (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))))) (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P2 acr_announce W2 W3 atF tF1)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))))) (r_and_rule (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))))) (r_and_rule (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))) (r_and_rule (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1)))) (l_or_rule (l_or_rule (axiom_rule (wrap_P3 forwarding W3 W2 W4 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))) (l_or_rule (axiom_rule (wrap_P1 onhook W3 atF tF2)) (axiom_rule (wrap_P1 onhook W3 atF tF1))))))))))))))))))))))))))))))))) (taxiom_rule (z wbefore tC))) (taxiom_rule (z wbefore tC))) (taxiom_rule (z wbefore tC))) (taxiom_rule (z wbefore tC))) (taxiom_rule (z wbefore tC)))))))))))))))))))))))))))))))))) (taxiom_rule (z wbefore W1))) (taxiom_rule (z wbefore W1))))))))))))
+
+yes

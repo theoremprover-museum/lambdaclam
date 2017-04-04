@@ -1,0 +1,83 @@
+\documentclass[11pt]{article}
+
+\begin{document}
+
+\title{$\lambda$-Clam v3.1.0: Release Note} 
+
+\author{James Brotherston}
+
+\date{September 7, 2001}
+
+\maketitle
+
+\section{New features with this release}
+
+\subsection{ProofGeneral interface}
+
+$\lambda$-Clam is now distributed with a version of the generic
+ProofGeneral interface.  Opening .lcm files in XEmacs automatically
+invokes ProofGeneral; the top buffer contains the .lcm script file
+with your Lambda-Clam commands and the lower buffer displays the
+LambdaClam response as you step through the commands using the toolbar
+buttons.  An example file (tutorial.lcm) is
+included in lambda-clam-teyjus/ProofGeneral/lclam/ to help you get started. \\
+
+\noindent\textbf{NB.} In order to use ProofGeneral, you need to add the
+following line to your .emacs file: 
+
+\noindent\texttt{(load "LCLAM\_PATH/lambda-clam-teyjus/ProofGeneral/generic/proof-site.el")} 
+
+\noindent where \texttt{LCLAM\_PATH} is the path to your lambda-clam-teyjus 
+directory.
+
+\subsection{Spypoint facility}
+
+The planner core now contains a spypoint mechanism so that you can
+tell Lambda-Clam to interrupt planning immediately after the
+successful application of a given method.  Once planning has been
+interrupted, you have all the options normally available in
+step-by-step (interactive) mode:
+\begin{itemize}
+\item \texttt{continue}
+\item \texttt{backtrack}
+\item \texttt{abandon}
+\item \texttt{plan\_node [node]}
+\item \texttt{try [method]}
+\end{itemize}
+\noindent Set spypoints with the command \texttt{set\_spypoint [method]} 
+and remove them with \texttt{remove\_spypoint [method]}.
+
+\subsection{Improved output functionality}
+
+Goals, addresses and successful method applications are now explicitly
+marked in the $\lambda$-Clam output.  The planner can now also be
+run in \emph{silent mode}, which suppresses output from failed method
+applications and backtracking attempts.  We suggest that you run
+$\lambda$-Clam in silent mode most of the time and use normal mode only 
+for debugging purposes. \\
+
+\noindent Switch between silent and normal output modes with the command
+\texttt{silent\_output [on/off]}.
+
+\section{Future development}
+
+This section details some of the ideas currently under consideration
+for future developments.  Feedback on these ideas is widely encouraged.
+
+\begin{enumerate}
+\item Improvements to the critics suite to bring them closer to the
+  performance standards achieved previously in CLAM.
+\item Fix for the known problems with embedding unifications.
+\item Integration of the existing code (due to Ewen Denney) for theory
+  compilation from `pretty' syntax to $\lambda$-Clam's internal
+  syntax.  This could also be integrated with ProofGeneral.
+\item Improved support for case-splitting.
+\item Implementation of alternative planning strategies
+  (breadth-first, iterative deepening).
+\end{enumerate}
+
+\section{Contact}
+The main $\lambda$-Clam developer is James Brotherston, email:
+jjb@dcs.ed.ac.uk or telephone: 0131-650-2721.
+
+\end{document}

@@ -1,0 +1,3 @@
+#load "types.mod".
+#load "rules.mod".
+#load "decider.mod".

@@ -1,0 +1,56 @@
+Define-Continue-Mode on
+Start-Interactive-MSC-Log 2 /* MSC with states and actions */
+Go
+/* provision(MyNumber, CFB_on, */
+/*  TL_on,  TCS_on, CW_on, */
+/*  TC_on,  RC_on, CNDB_on, */
+/*  RB_on, VM_on, SB_on) */
+Output-To provision (1, False, False, False, False, False, False, False, True, False, False) <<Block Control_Software_1>> Control_Software_P1    /*First Block has the no. 1 */
+Output-To provision (2, False, False, False, False, False, False, False, True, False, False) <<Block Control_Software_2>> Control_Software_P1    /*Second Block has the no. 2 */
+Output-To provision (3, False, False, False, False, False, False, False, True, False, False) <<Block Control_Software_3>> Control_Software_P1    /*Third Block has the no. 3 */
+Output-To provision (4, False, False, False, False, False, False, False, True, False, False) <<Block Control_Software_4>> Control_Software_P1    /*Forth Block has the no. 4 */
+Go
+/* setupmyphoneline(ForwardTo, */
+/*   teenlinepinrequired_on, teenlinepin,  */
+/*   screenedcaller,  */
+/*   reversechargingcallee,   */
+/*   splitbillingcallee)  */
+Output-To setupmyphoneline (0, False, 0, 0, 0, 0 ) <<Block Control_Software_1>> Control_Software_P1    /*First Block has the no. 1 */
+Output-To setupmyphoneline (0, False, 0, 0, 0, 0 ) <<Block Control_Software_2>> Control_Software_P1    /*Second Block has the no. 2 */
+Output-To setupmyphoneline (0, False, 0, 0, 0, 0 ) <<Block Control_Software_3>> Control_Software_P1    /*Third Block has the no. 3 */
+Output-To setupmyphoneline (0, False, 0, 0, 0, 0 ) <<Block Control_Software_4>> Control_Software_P1    /*Forth Block has the no. 4 */
+Go
+
+
+/* RB on all */
+/* 1 dials 4, 1 and 4 get connected, then 2 dials 1  */
+/* Gets the ring back message, */
+
+
+Output-To offhook (1, 1, 0) <<Block Control_Software_1>> Control_Software_P1
+Go
+Output-To dial (1, 1, 4) <<Block Control_Software_1>> Control_Software_P1
+break-output alert env 1 <<Block Control_Software_4>> Control_Software_P1 1 1 -
+GO
+Output-To offhook (4, 4, 0) <<Block Control_Software_4>> Control_Software_P1
+Go
+Output-To offhook (2, 2, 0) <<Block Control_Software_2>> Control_Software_P1
+Go
+Output-To dial (2, 2, 1) <<Block Control_Software_2>> Control_Software_P1
+break-output alert env 1 <<Block Control_Software_1>> Control_Software_P1 1 1 -
+GO
+Output-To onhook (2, 2, 0) <<Block Control_Software_2>> Control_Software_P1
+Go
+Output-To onhook (4, 4, 0) <<Block Control_Software_4>> Control_Software_P1  
+Go 
+Output-To onhook (1, 1, 0) <<Block Control_Software_1>> Control_Software_P1  
+Go
+Output-To offhook (1, 1, 0) <<Block Control_Software_1>> Control_Software_P1
+break-output alert env 1 <<Block Control_Software_2>> Control_Software_P1 1 1 -
+GO
+Output-To offhook (2, 2, 0) <<Block Control_Software_2>> Control_Software_P1
+Go
+Output-To onhook (2, 2, 0) <<Block Control_Software_2>> Control_Software_P1
+Go
+Output-To onhook (1, 1, 0) <<Block Control_Software_1>> Control_Software_P1  
+Go

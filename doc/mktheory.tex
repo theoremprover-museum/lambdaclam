@@ -1,0 +1,630 @@
+\chapter{Creating Theories as Library Files\index{library file} or
+\lprolog\ files\index{theory file}}
+\label{mktheory}
+
+\section{Introduction}
+At present, the best way to add your own goals\index{goal},
+methods\index{methods}, rewrite rules\index{rewrite rule}, etc. to
+\lclam\ is to compile a theory file into its bytecode.  This chapter
+aims to overview the main components of a theory file and discuss how
+to compile and debug it.
+
+\section{Theory File Components}
+\subsection{Theory Name\index{theory name}}
+In most cases it is advisable to name your theory by introducing a
+constant of type {\tt theory}\index{theory type} in your theory's
+signature file\index{signature file}.  
+
+\subsection{Syntax Constants\index{syntax constants}}
+NOTE:  We have a utility for writing syntax in a more natural format
+than that required by \lclam's internals.  See chapter~\ref{compiler}.
+
+Syntax constants can be any function symbols or constants that you
+wish to include in your theory.  These should be declared in the
+signature file of your theory (as items of type {\tt osyn} \index{osyn
+  type}).  You should also include a clause of the predicate {\tt
+  has\_otype}\index{has\_otype} in the module file for your theory.
+{\tt has\_otype} takes as arguments the name of the theory, the name
+of the constant and the type.  New types should be declared using {\tt
+  is\_otype}\index{is\_otype}.  {\tt is\_otype} takes the name of the
+theory, the new type and two lists of constructors one for ``base''
+elements of the type and one for ``constructor'' functions.  Types are
+given the type {\tt universe}\index{universe}.  For example the
+following is taken from the arithmetic theory\index{arithmetic theory}
+and declares the type {\tt nat}\index{nat} with the constructors {\tt
+  zero}\index{zero} and {\tt s}\index{a} and the function {\tt
+  plus}\index{plus}.
+
+\begin{verbatim}
+is_otype arithmetic nat [zero] [s].
+
+has_otype arithmetic zero nat.
+has_otype arithmetic s (nat arrow nat).
+has_otype arithmetic plus ((tuple_type [nat, nat]) arrow nat).
+\end{verbatim}
+
+The signature file for the theory contains the declarations
+
+\begin{verbatim}
+type    nat     osyn.
+
+type    zero    osyn.
+type    s       osyn.
+type    plus    osyn.
+\end{verbatim}
+
+
+\subsection{Goals\index{goal}}
+
+New goals are declared using the predicate {\tt
+  top\_goal}\index{top\_goal}.  This takes four arguments: the theory
+name; the name of the goal; a list of hypotheses; and finally a goal
+conclusion.  So, for example, again from arithmetic\index{arithmetic
+  theory}, we have in the signature
+
+\begin{verbatim}
+type assp           query.
+\end{verbatim}
+
+and in the module
+
+\begin{verbatim}
+top_goal arithmetic assp []
+    (app forall (tuple [nat, 
+     (abs z\ (app forall (tuple [nat, 
+      (abs y\ (app forall (tuple [nat, 
+       (abs x\ (app eq (tuple [
+        (app plus (tuple [
+         (app plus (tuple [x, y])), z])), 
+        (app plus (tuple [x, 
+         (app plus (tuple [y, z]))]))])))])))])))])).
+\end{verbatim}
+
+\subsection{Atomic Methods}
+
+Atomic methods\index{method!atomic} are declared by writing clauses
+for the predicate: \\
+{\tt atomic: theory -> meth -> goal -> o -> o -> goal -> tactic -> o.} \\
+It takes as arguments the name of the theory file\index{theory file},
+the name of the method\index{method!name}, the input
+goal\index{goal!input}, the preconditions\index{preconditions} and
+postconditions\index{postconditions} (written in \lprolog) the output
+goal\index{goal!output}, and the corresponding tactic\index{tactic}
+(at present this is always the placeholder {\tt
+  notacticyet}\index{notacticyet}).  Most internal goals will be
+sequent goals\index{sequent goal} created using the {\tt
+  seqGoal}\index{seqGoal} constructor: {\tt seqGoal (H >>> G)}.
+
+If the method will instantiate some variable (input as part of the
+method name) (e.g. rewriting\index{rewriting} methods frequently
+instantiate a variable with the name of the rewrite rule\index{rewrite
+  rule} used) then an additional predicate {\tt
+  change\_method\_vars}\index{change\_method\_vars} must also be used.
+This simply relates the method name to itself but without enforcing
+unification of any variables that will need instantiating.  This
+predicate is used internally to ensure that the variable is not
+accidentally instantiated for subsequent method calls during planning.
+
+For instance, the wave method\index{wave method} is declared in
+the wave theory\index{wave theory} files.  In the signature we have:
+
+\begin{verbatim}
+type wave_method rewrite_rule ->  meth.
+\end{verbatim}
+
+and the module itself contains the method definition:
+
+\begin{verbatim}
+atomic wave (wave_method Rule)
+        (ripGoal (Hyps >>> Goal) Skel E1)
+        (ripple_rewrite Rule Skel (Goal @@ E1) (NewGoal @@ E2) Cond,
+         (embeds_list E2 Skel NewGoal,
+         (measure_check red Dir E2 E1 nil Embedding,
+         (for_all Embedding sinkable,
+         (trivial_condition Cond Hyps)))))
+        true
+        (ripGoal (Hyps >>> NewGoal) Skel Embedding)
+        notacticyet.
+change_method_vars (wave_method Rule) (wave_method _) :- !.
+\end{verbatim}
+
+\subsection{Compound Methods\index{method!compound}}
+Compound methods are declared by writing clauses for the predicate: \\
+{\tt compound: theory -> meth -> meth -> (list int) -> o -> o.}\\
+It takes as arguments the name of the theory \index{theory file}, the
+name of the method\index{method!name}, the methodical
+expression\index{methodical!expression} which makes up the method, the
+address where the method was applied (typically blank) and
+preconditions\index{preconditions} (in \lprolog).
+
+If the method will instantiate some variable then, as with atomic
+methods, the predicate {\tt
+  change\_method\_vars}\index{change\_method\_vars} will have to be
+extended.
+
+So, for instance, a simplfied version of the step case method\index{step case method}\footnote{The actual {\tt step\_case} method used in \lclam\ is more complex than this in order to deal with a number of special cases.} in the 
+induction theory\index{induction theory} could be declared in the signature
+file as  
+
+\begin{verbatim}
+type   step_case  meth.  
+\end{verbatim}
+
+and in the module as
+
+\begin{verbatim}
+compound induction step_case
+        ( cut_meth
+           ( then_meth set_up_ripple 
+               (then_meth (repeat_meth (wave_method R))
+                  (then_meth post_ripple
+                        (try_meth fertilise                                 
+                         )
+                  )
+               )
+            )
+         )
+        _
+        true.
+\end{verbatim}
+
+Compound methods\index{method!compound} use
+methodicals\index{methodical} to build up more complex proof
+strategies from other methods.  The methodicals available in \lclam\ 
+are listed below.
+\begin{center}
+\begin{tabular}{|l|l|} \hline
+Methodical & Type \\ \hline
+id\_meth\index{id\_meth} & {\tt meth} \\ 
+triv\_meth\index{triv\_meth} & {\tt meth} \\
+orelse\_meth\index{orelse\_meth} & {\tt meth -> meth -> meth} \\
+cond\_meth\index{cond\_meth} & {\tt (goal -> o) -> meth -> meth ->
+meth} \\
+try\_meth\index{try\_meth} & {\tt meth -> meth} \\
+repeat\_meth\index{repeat\_meth} & {\tt meth -> meth} \\
+then\_meth\index{then\_meth} & {\tt meth -> meth} \\
+then\_meths\index{then\_meths} & {\tt meth -> meth -> meth} \\
+map\_meth\index{map\_meth} & {\tt meth -> meth} \\
+complete\_meth\index{complete\_meth} & {\tt meth -> meth} \\
+cut\_meth\index{cut\_meth} & {\tt meth -> meth} \\
+pair\_meth\index{pair\_meth} & {\tt meth -> meth -> meth} \\ 
+best\_meth\index{best\_meth} & {\tt list meth -> meth} \\ \hline
+\end{tabular}
+\end{center}
+
+A brief description of the methodicals\index{methodical} follows:
+\begin{description}
+\item[id\_meth\index{id\_meth}] Automatically succeeds.  This is used
+  in the implementation of methods such as {\tt
+    try\_meth}\index{try\_meth} but can also be useful when dealing
+  with more than one subgoal.  For instance the {\tt
+    induction\_meth}\index{induction\_meth} returns two subgoals a
+  step case\index{step case} and a base case\index{base case}.  The
+  step case is given to the {\tt step\_case}\index{step\_case} method
+  while the base case is to be treated like most other goals by having 
+  the default {\tt induction\_top\_meth}\index{induction\_top\_meth}
+  applied to it.  The method, {\tt ind\_strat}\index{ind\_strat}, does 
+  this as follows:
+\begin{verbatim}
+compound induction (ind_strat IndType)
+      ( then_meths (induction_meth IndType Scheme Subst)
+                   (pair_meth (map_meth (step_case IndType)) (map_meth id_meth)) )
+        _
+        true.
+\end{verbatim}
+This applies the {\tt induction\_meth} and then applies {\tt
+  step\_case} method to the first subgoal (the step case) and {\tt
+  id\_meth} to the second subgoal (the base case).  Since {\tt
+  id\_meth} does nothing the result is subgoal is unchanged an is
+passed as a result of {\tt ind\_strat} to the top level repeat.
+\item[triv\_meth\index{triv\_meth}] Only succeeds if the goal is {\tt
+    trueGoal}.  Is used in the implementation of {\tt
+    complete\_meth}\index{complete\_meth}.
+\item[orelse\_meth\index{orelse\_meth}] Succeeds if one of the two
+  methods succeeds.
+\item[cond\_meth\index{cond\_meth}] If the condition evaluates to true 
+  then it tries the first method otherwise it tries the second.
+\item[try\_meth\index{try\_meth}] Attempts the listed method but does
+  not fail if the method fails.
+\item[repeat\_meth\index{repeat\_meth}] Attempt the method as many
+  times as possible.  The method must succeed once.
+\item[then\_meth\index{then\_meth}] Tries the first method and then
+  apples the second method to the result of the first.
+\item[then\_meths\index{then\_meths}] In the current implementation
+  this is identical to {\tt then\_meth}\index{then\_meth} but the
+  intention is that it should provide finer control over multiple
+  subgoals while {\tt then\_meth} should be more brute force.
+\item[map\_meth\index{map\_meth}] Maps the method does a list of
+  subgoals.
+\item[complete\_meth\index{complete\_meth}] Succeeds only if the
+  output of the method is {\tt trueGoal}\index{trueGoal}.
+\item[cut\_meth\index{cut\_meth}] Indicates that if the method
+  succeeds then if the proof subsequently fails alternative successes
+  of the method should not be considered.  This is not implemented in
+  the current version of \lclam.  This is intended to be like prolog cut.
+\item[pair\_meth\index{pair\_meth}] Applies to two subgoals and
+  applies the first method to the first subgoal and the second method
+  to the second subgoal.
+\item[best\_meth\index{best\_meth}] Takes a list of methods (each of
+  which may be either atomic or compound), computes a heuristic score
+  for each method using the current subgoal, and applies the method
+  with the lowest score to the subgoal.  If that fails, the method
+  with the next lowest score is attempted, and so on.  The heuristic
+  scoring predicate is \texttt{score\_method: goal -> meth -> int ->
+    o.}  To write a scoring function for a method, one just writes a
+  clause for this predicate along with the method definition.  The
+  file theories/best\_first\_test.mod contains an example best-first
+  top method and some fixed method scores (which the user should feel
+  free to experiment with).
+\end{description}
+
+Methodicals\index{methodicals} can thus be used to create complex
+strategies tailored to attempting specific sorts of problem.  More and 
+more complex strategies can be created out of the blocks of simpler
+strategies.  It is such a strategy that is applied to a goal as its
+``top method''.  
+
+\section{Critics\index{critics}}
+
+The critics code is still in development and has yet to be properly
+documented.  The modules {\tt core\_theories/wave\_critics.mod} and
+{\tt theories/ireland\_critics.mod} contain the currently implemented
+critics and we advise the interested reader to consult these files.
+
+Critics are invoked when a method within a {\tt
+  patch\_meth}\index{patch\_meth} fails.  {\tt patch\_meth} takes two
+arguments, a method and a critic, and applies the critic to the goal
+when the method fails.  As a side effect it also prints out the
+failing methods preconditions --- this can be used for debugging by
+replacing the appearance of the method in your strategy with {\tt
+  patch\_meth Method id\_crit}\index{id\_crit}.
+
+There are four built-in basic critics\index{critic!built-in} that can
+be used to build up critic strategies:
+
+\begin{verbatim}
+type    pop_critic      (list int) -> crit.
+type    open_node       crit.
+type    continue_crit   (meth -> meth) -> crit.
+type    roll_back_to_crit       meth -> (list int) -> crit.
+\end{verbatim}
+
+{\tt pop\_critic}\index{pop\_critic} returns the address of the top
+node on the agenda\index{agenda}.  {\tt open\_node}\index{open\_node}
+makes the node to which the critic is currently applying open and {\tt
+  continue\_crit}\index{continue\_crit} transforms the methodical
+expression at a node as specified.  {\tt
+  roll\_back\_to\_crit}\index{roll\_back\_to\_crit} deletes all nodes
+in the plan after the last occurence of the specified method and
+places the node at which the method was applied at the top of the
+agenda\index{agenda}.
+
+Compound critics\index{critic!compound} are glued together using {\em
+  criticals}\index{criticals}, which are analogous to methodicals for
+lguing together methods.  \lclam's criticals are shown in the
+following table.
+\begin{center}
+\begin{tabular}{|l|l|} \hline
+Critical & Type \\ \hline
+fail\_crit\index{fail\_crit} & {\tt crit} \\
+id\_crit\index{id\_crit} & {\tt crit} \\
+orelse\_crit\index{orelse\_crit} & {\tt crit -> crit -> crit} \\
+cond\_crit\index{cond\_crit} & {\tt    (plan\_state -> o) -> crit -> crit -> crit.} \\
+try\_crit\index{try\_crit} & {\tt         crit -> crit.} \\
+repeat\_crit\index{repeat\_crit} & {\tt      crit -> crit.} \\
+then\_crit\index{then\_crit} & {\tt        crit -> crit -> crit.} \\
+subplan\_crit\index{subplan\_crit} & {\tt     (list int) -> crit -> crit.} \\
+some\_crit\index{some\_crit} & {\tt        (\_ -> crit) -> crit.} \\ \hline
+\end{tabular}
+\end{center}
+
+Most of these criticals\index{critical} work analogously to the
+methodical\index{methodical} with the associated name.  However, {\tt
+  subplan\_crit}\index{subplan\_crit} and {\tt
+  some\_crit}\index{some\_crit} require explanation.  {\tt
+  subplan\_crit} apples the critic to a particular address in the plan
+-- these need not be the address at which a method failed.  {\tt
+  some\_crit} takes a function which produces a critic as its output.
+This is then applied to a meta-variable and the resulting critic
+applied -- {\em to be honest I'm not clear what function this is
+  supposed to serve - Louise}.  There is more discussion of critics in
+chapter~\ref{core}.
+
+WARNING: in Teyjus, the comma used to sequence predicates
+associates to the left.  The way the critics planner works means that
+you will have to explicitly bracket your method
+preconditions\index{method!preconditions} in order to get the planner
+to consider them one at a time (as shown in the wave method\index{wave
+  method} above).
+
+\section{Compiling your Theory\index{theories!compilation}}
+
+Say your theory is called {\tt mytheory} and is in the files {\tt
+  mytheory.sig} and {\tt mytheory.mod}.  
+
+If your theory depends on no other theories add
+
+{\tt accum\_sig lclam.} 
+At the top of your theory's {\tt .sig} file and
+
+{\tt accumulate lclam.} 
+At the top of your theory's {\tt .mod} file.
+
+It your theory depends upon other theories then you must should
+replace the {\tt lclam} accumulation headers with the name of these
+theories.  You should try and minimise the number of theories
+accumulated into your modules and you should make sure that no theory
+can be accumulated twice - e.g. by being accumulated into your module
+and into one of the other theories accumulated into the module. 
+
+The {\tt lclam} command runs \lprolog\ executable called {\tt test.lp}
+in the {\tt planner/} directory.  If you want to incorporate your
+theory file into those used by {\tt test.lp} then you will need to add
+accumulation commands for your theory to {\tt test.sig} and {\tt
+  test.mod}, and similarly if you wish to modify an existing theory to use
+predicates in your theory.
+
+Otherwise you may run your theory without all the other stuff
+which is included in test.  First you must compile your theory into an 
+executable.
+
+If your theory is in the {\tt theories/} subdirectory of the
+distribution.  Type {\tt make mytheory.lp} in the {\tt theories/}
+subdirectory.  Otherwise you need to include the location of your
+theory on your {\tt TJPATH}\index{TJPATH}, and then type {\tt tjcc
+  mytheory.lp} in that directory.  
+
+The command:
+
+{\tt \$LCLAM\_HOME/bin/lclam mytheory}
+
+will then act just like {\tt lclam} except that the only methods 
+etc. available will be those in your theory.
+
+\subsection{If your theory will not Compile}.
+The first thing to do is to check for warnings and error messages in
+the output generated by the compiler.   Many such errors will look
+like the following:
+\begin{verbatim}
+./mytheory.mod:57.1: Error: clash in operator and operand type
+\end{verbatim}
+This tells you the name of the module in which the error occured, {\tt
+  mytheory} in this case, the line in that module which is causing the 
+error, 57 in this case, and the character in the line, 1 in this
+case.  It will then give some details of the error, usually these will 
+be type checking failures and the compiler will give both the expected 
+type and the existing type.  
+
+It is always worth checking for warnings even if compilation has
+successfully completed.  For instance the compiler warns if it meets
+an undeclared constant (i.e. one for which no type has been given).
+This is often a sign of mispelling somewhere.  The compiler does not
+warn about single occurences of variable names in predicate clauses -- 
+unlike most prolog compilers which do warn of this.
+
+If the compiler is no longer generating errors or warning and your
+module still will not compile or run there are a number of possible
+causes.  In the case of failing to compile common messages are {\tt
+  Access to unmapped memory!}, {\tt Signal 10} or {\tt Signal 6}.  All
+of these errors can be fixed by the addition or removal (seemingly at
+random) of print statements or by commenting in or out extra
+predicates which are not used in the code.  These error messages are
+caused by a bug in the Teyjus compiler which hopefully will become
+less and less frequent as Teyjus becomes more stable.
+
+If your program compiles but fails to run with the message of the form
+{\tt Loader error: X overflow} then it has exceeded
+built-in limits in the Teyjus simulator.  It is possible to extend
+these limits in the Teyjus source and then recompile, contact {\tt
+  dream@dream.dai.ed.ac.uk} for details.
+
+\section{Some Useful Built-In Predicates}
+There are a number of standard list and map predicate you may want to
+use in developing \lclam\ theories.  You can find this by looking at
+the files in the {\tt utils/} subdirectory of the \lclam\
+distribution.
+
+Other predicate you may find useful are:
+
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt obj\_atom}\
+\end{Large}index{obj\_atom}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{{\tt type obj\_atom osyn -> o.}}
+
+\subsection*{Synopsis}
+Succeeds if the input is an atomic piece of syntax (i.e. not a
+tuple\index{tuple}, function application\index{function application},
+$\lambda$-abstraction\index{$\lambda$-abstraction} etc.).
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt subterm\_of}
+\end{Large}\index{subterm\_of}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type subterm\_of osyn -> osyn -> (list int) -> o.}
+
+\subsection*{Synopsis}
+Succeeds if the first argument is a subterm of the second, appearing
+at the position in the term indicated by the third argument.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+{\tt has\_otype\_}
+\end{Large}\index{has\_otype\_}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type has\_otype\_ osyn -> osyn -> o.}
+
+\subsection*{Synopsis}
+Returns the object type of the
+syntax given as its second argument.  
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt env\_otype}
+\end{Large}\index{env\_otype}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type env\_otype osyn -> (list osyn) -> osyn -> o.}
+
+\subsection*{Synopsis}
+Mostly used to return (as its third argument) the object type of the
+syntax given as its first argument, given an environment (list of
+hypotheses, some of which may contain typing information) given as its 
+second argument.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt replace\_at}
+\end{Large}\index{replace\_at}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type replace\_at osyn -> osyn -> osyn -> (list int) -> o.
+}
+
+\subsection*{Synopsis}
+Third argument is the first argument with the subterm indicated by the 
+fourth argument replaced by that indicated by the second argument.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt replace\_in\_hyps}
+\end{Large}\index{replace\_in\_hyps}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type replace\_in\_hyps   (list osyn)  -> osyn -> (list
+  osyn) -> (list osyn) -> o.}
+
+\subsection*{Synopsis}
+Replaces one hypothesis with a list of hypotheses.  The first argument 
+is the original list of hypotheses, the second is the hypothesis to be 
+replaced, the third the list of hypotheses to appear in its stead and
+the forth the resulting hypothesis list.  This predicate appears in the
+{\tt logic\_eq\_constants} theory\index{logic\_eq\_constants} and so
+this will need to be accumulated to use this predicate.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt printstdout}
+\end{Large}\index{printstdout}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type printstdout A -> o.}
+
+\subsection*{Synopsis}
+Prints its argument to standard out followed by a new line.
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt testloop}
+\end{Large}\index{testloop}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt type testloop o -> o.}
+
+\subsection*{Synopsis}
+Allows the interactions at the command line to be simulated.
+
+\subsection*{Example}
+
+The following piece of code provides a predicate which will set up a
+particular contect (e.g. it uses all the induction schemes in
+arithmetic and lists) and then plans a goal in that context.  This
+saves the user typing in the list of instructions each time they want
+to test their methods.
+\begin{verbatim}
+benchmark_plan test Meth Query :-
+        testloop (add_theory_to_induction_scheme_list arithmetic,
+        (add_theory_to_induction_scheme_list objlists,
+        (set_sym_eval_list [idty, s_functional, cons_functional, leq1, leq2, leq_ss, assAnd1, prop3, prop4, prop5, prop6],
+        (add_theory_defs_to_sym_eval_list arithmetic,
+        (add_theory_defs_to_sym_eval_list objlists,
+        (set_wave_rule_to_sym_eval,
+        pds_plan Meth Query)))))).
+\end{verbatim}
+NOTE: bracketing of commands has had to be made explicit for this to
+work.  It is possible to write your own clauses for {\tt
+  benchmark\_plan}\index{benchmark\_plan} the first argument is the
+name of a theory and so can be used to determine precisely which
+context is wanted by the user.  Obviously it also possible to write
+completely new predicates that involve {\tt testloop} to perform other 
+such tasks.  Examples of {\tt benchmark\_plan} can be seen in the {\tt 
+  list\_benchmarks} theory\index{list\_benchmarks}, the {\tt
+  ordinal}\index{ordinal} theory and a number of others.
+
+\subsection{List and Mapping Utilities}
+A number of utility predicates for manipulating lists and mapping
+predicates down lists have been implemented in \lclam\ on top of those 
+already existing in Teyjus.  These can be found in the files {\tt
+  lclam\_list} and {\tt
+  lclam\_map}\index{lclam\_list}\index{lclam\_map} in the {\tt util/}
+subdirectory of the distribution.
+
+\section{Debugging Theories\index{debugging}}
+
+It is described above how {\tt patch\_meth}\index{patch\_meth} can be
+used to provide information about the failure of a methods
+preconditions.  There is also a predicate that can be embedded into
+the code to print out information on backtracking:
+
+
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+\begin{Large}
+\noindent{\tt on\_backtracking}
+\end{Large}\index{on\_backtracking}
+\vspace{2mm}
+\hrule
+\vspace{2mm}
+
+\noindent{\tt 
+type on\_backtracking o -> o.
+}
+
+\subsection*{Synopsis}
+This can be supplied with a \lprolog instruction which it will only
+execute when backtracked over.  For example, it is used in the partial 
+data structure planner\index{PDS planner} to print information when a
+method is being backtracked over, using the call
+
+\begin{verbatim}
+on_backtracking 
+        (pprint_string "backtracking over",
+        pprint_name Method),
+\end{verbatim}

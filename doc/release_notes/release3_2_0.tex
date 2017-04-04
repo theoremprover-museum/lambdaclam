@@ -1,0 +1,114 @@
+\documentclass[11pt]{article}
+
+\begin{document}
+
+\title{$\lambda$-Clam v3.2.0: Release Note} 
+
+\author{James Brotherston}
+
+\date{February 28, 2002}
+
+\maketitle
+
+\section{New features with this release}
+
+\subsection{Best-first methodical}
+We have extended the $\lambda$-Clam methodical language with a new
+methodical \verb+ best_meth: (list meth) -> meth + which takes a list
+of methods (each of which may be either atomic or compound), computes
+a heuristic score for each method using the current goal, and applies
+the method with the lowest score.  If that fails, the method with the
+next lowest score is attempted, and so on. \\
+
+\noindent Currently no heuristic scoring functions have been written --- basic
+testing has been carried out using hard-coded method scores.  The
+heuristic scoring predicate is \texttt{score\_method: goal -> meth ->
+  int -> o.}  To write a scoring function for a method, one just
+writes a clause for this predicate along with the method definition. \\
+
+\noindent The file theories/best\_first\_test.mod contains an example
+best-first top method and some fixed method scores (which the user
+should feel free to experiment with).
+
+\subsection{Iterative deepening planner}
+$lambda$-Clam now incorporates an iterative deepening planner in
+addition to the standard depth-first PDS planner.  The default
+configuration uses an initial depth limit of 3 and a depth increment
+of 2 after each pass.  At the moment these variables are hard-coded in 
+but we can include them as command line arguments in the future if
+there is demand for it.  The depth of the current plan node is also
+displayed in the planning output after the node address. \\
+
+\noindent Call the iterative deepening planner with the command
+\texttt{pds\_iter\_plan [method] [goal]}.  If a spypoint is set at the top
+method (\texttt{set\_spypoint my\_top\_meth}) this will have the effect
+of asking the user whether to continue at each new iteration.
+
+\subsection{MathWeb integration}
+Work on integrating $\lambda$-Clam with the MathWeb system has
+resulted in the addition of the following new modules:
+
+\begin{description}
+\item[planner/mathweb.mod]
+predicates for establishing socket communication with the MathWeb-SB and
+for requesting and accessing services.
+
+\item[theories/mw\_top.mod] new alternative top module for
+  $\lambda$-Clam / MathWeb which imports all the necessary theory
+  files.
+
+\item[theories/analytica.mod]
+containing the analytica examples and examples taken 
+from Toby Walsh's work (Fibonacci numbers, closed forms of sums).
+
+\item[theories/otter.mod] method that calls Otter on subgoal.
+
+\item[theories/maple.mod] method that calls Maple simplification.
+  Contains the code needed for the check whether a formula is
+  arithmetic.
+
+\end{description}
+
+\subsection{Mutual induction module}
+The new module theories/mutual\_induction.mod in the distribution
+contains a method and supporting predicates for handling certain types
+of mutual induction.  The module is still in development at this time
+and so the use of this method is not recommended.  Normal
+$\lambda$-Clam operation should not be affected by this addition.
+
+\subsection{Reset command}
+A reset command \texttt{reset\_lclam} has been added to the system.
+When executed, it clears the induction schemes list, the sym\_eval
+list, the general list and the wave rule list.
+
+\section{Fixes and improvements to v3.1.0}
+\subsection{Goal pretty printing}
+The pretty printer code has been extended to include pretty printing
+of andGoals and allGoals, which should get rid of (most of) the
+\texttt{"Don't know how to display goal..."} messages.
+
+\subsection{Compound method slots}
+Compound methods now have an extra slot to compound methods which is
+for the current address of the plan node, in connection with experiments
+with preconditions for compound methods (in particular to prevent
+repeat attempts at symbolic evaluation which is causing a lot of our
+non-termination). 
+
+\subsection{Parameterisation of induction methods}
+The methods induction\_top\_meth, induction\_critics, ind\_strat\_*,
+step\_case\_* have been changed so that they take an argument:
+normal\_ind, with\_critics, exi.  This way instead of having a number
+of methods called, say ind\_strat and ind\_strat\_critics and
+ind\_strat\_exi which differed only in the step case method they
+called, there is just one ind\_strat method which takes an argument.
+
+\section{Acknowledgements}
+We would like to credit the following members of the DREAM group for
+all their hard work and assistance on $\lambda$-Clam v3.2.0: Louise
+Dennis, Alan Smaill, and J\"urgen Zimmer.
+
+\section{Contact}
+The main $\lambda$-Clam developer is James Brotherston, email:
+jjb@dai.ed.ac.uk or telephone: +44 (0)131-650-2721.
+
+\end{document}

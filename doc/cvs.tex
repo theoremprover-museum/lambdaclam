@@ -1,0 +1,287 @@
+\chapter{Working with \lclam\ within the Dream Group: The CVS Server}
+
+\section{Introduction}
+We have had a serious problem in the past that each member of the
+Dream Group essentially worked on and developed their own version of
+\clam.  In this way interesting and important additions, such as
+critics or relational rippling, never found their way into the main
+distribution.
+
+We are anxious that a similar situation doesn't arise with \lclam\ and 
+this guide is intended to set out some procedures for preventing this.
+
+\section{Trying Out the System, Running Case Studies with existing
+  Methods and Strategies}
+
+It should be possible to run \lclam\ on your own theorems without having a
+personal version of the system or compiling any \lprolog\ files
+yourself.  This will done using \lclam's library
+mechanism\footnote{Not yet implemented} or the command line options
+for adding theory information discussed in chapter~\ref{basic}.  If at
+all possible we would like to 
+encourage users to work with \lclam\ through this mechanism.  In this
+way any work they do consists solely of new library files which can be 
+easily included in the distribution.  This work can be done using the
+centrally installed executable for the latest version of
+\lclam\footnote{There is currently no centrally installed version but
+  there will be for version 0}.  
+
+This method of working should be sufficient for anyone
+experimenting with the existing capabilities of the system to see what 
+it can do.
+
+\section{Developing Complex Methods, Heuristics and Theories}
+
+To customise \lclam\ with your own predicates you will need
+a copy of the source code in your own directory space.  This doesn't
+mean, however, that you have to work on it in isolation or that you
+should make changes to the existing files in the distribution.
+
+Firstly, unless you do so in consultation with one of the \lclam\
+developers\footnote{One of the two RAs on the project, the computing
+  officer or Alan Smaill}, you should not edit any files in the distribution unless it 
+is a Makefile\index{Makefile}.  In this way all 
+modifications made by individuals should appear in separate files
+which can be imported wholesale into the main distribution without
+hundreds of minor edits being needed throughout the system.  
+
+If you anticipate that you will be working with \lclam\ in this way
+for a significant period of time then you should seriously consider
+getting hold of the source code through CVS\index{cvs}.  This means
+that you can 
+keep track of any changes being made by the developers on a regular
+basis so that at the end of your work your new code still works with
+any changes that may have been made with \lclam\ in the meantime.
+This stops you ending up with files that only work with a now defunct
+version of \lclam.  There are a number of CVS guides around which
+will tell you how to use it, including a quick crib at the end of this 
+appendix.  The important thing for work of this
+nature is that you don't necessarily have to include your personal
+work in the main source directories that everyone sees until you feel
+ready to do so.  You can however update your \lclam\ source files
+regularly from the main directory so that you keep track of any
+changes other people are making.  Regular updating by users and
+hence regular bug reporting also allows the developers to identify
+quickly if they have made a change which has introduced bugs.
+
+\section{Developing the Core of \lclam} 
+There shouldn't be a large number of people who have reason to change
+the core \lclam\ files.  It should mainly be the two RAs, Alan Smaill
+and Gordon Reid, plus people working on the induction competition etc.
+Developers should try to update and commit their work regularly.  We
+should probably also aim for something like 6 monthly releases of the
+code so that users not working on code in the CVS repository still
+working on pretty much up-to-date version of \lclam.
+
+\section{Undergraduates, MSc Students, Researchers visiting for less
+  than 6 months}
+
+Hopefully many of people on short projects will be able to work with
+library files alone, in which case they need never worry about
+acquiring a copy of the code for themselves.
+
+It is unreasonable to ask someone who
+will only work 
+with the system for a few months to get to grips with CVS, nor will 
+they want to cope with the vagaries of constantly changing code.  
+
+If
+you fall into this category and you
+need to write files for compilation you should 
+take a snapshot of the most recent version of \lclam\ in the directory in
+{\tt /usr/local/reason/dream/meta-level/lambda-clam/} and work with
+that.  Please bear in mind the notes above about only altering
+specific files without consulting the developers.  
+
+At the end of the project get in touch with either of the two RAs
+about merging your work back into \lclam. 
+
+\section{PhD Students, Researchers on long term projects or those
+  wanting to work with the most up to date version of the system}
+
+If you are a PhD student or a researcher with a long term project
+(not counting those who can manage with 
+library files alone) then you should either ensure that you take a new 
+snapshot of the code every time there is a release or you should work
+with the CVS repository.  While this second option makes you more
+vulnerable to  
+changes in the code it makes it much more
+likely, at the end of your research, that the work you have done will be 
+consistent with the the current version of \lclam\ and that \lclam\ will be
+consistent with your work.  This makes it much more likely that your
+work will get out and be used by other people.
+
+Working with the current version in CVS also means that you can get
+specific bug fixes within hours of them being made instead of waiting
+for the next release.  In some cases this means you will be able to
+receive bug fixes in a very short space of time after first
+discovering the bug.
+
+If using CVS, there is no need to put your work into the main
+distribution until you  
+are ready.  All that is required is that you regularly (say
+once a month) update the files in your directory
+(using {\tt cvs update -d} - see appropriate CVS manual).  This means
+that any changes the developers have made in the meantime will
+propagate themselves into the code you are using.  At the end of your
+time using \lclam\ you simply type {\tt cvs commit} to put your work
+into the main distribution for others to see and use.  
+
+We realise this is not an ideal situation.  We would like to get to a
+situation where anyone developing strategies, methods, heuristics and
+theories can work through library files alone from a centrally
+installed version of \lclam.  At the moment this simply isn't
+possible.  While this system will undoubtedly cause many short term
+headaches we hope that in the long run it will mean less work for all
+concerned.
+
+
+\section{CVS Crib}
+
+CVS works on the principal of editing files in your own private
+    working directory and then merging them back into a central
+    repository.  This is done by the use of the commands {\tt cvs
+      commit} and {\tt cvs update}.  {\tt cvs
+      commit} commits any changes you have made in your working
+    directory back into the main tree, while {\tt cvs update}
+    merges any changes in the main tree into the files in your working 
+    directory.  There are subsidiary commands to add and remove files
+    from the CVS repository and to acquire a working directory (these
+    are outlined in the crib below).
+
+
+CVS commands generally work on everything in the directory where
+      they are invoked and all its subdirectories.  This can seem a
+      little strange at first.  E.g. typing {\tt cvs update} in 
+      some sub-directory of the module will update all the files in
+      that directory and its subdirectories, but will not update
+      anything in any higher-level directories. 
+
+To use CVS you need to set the enviroment variable \verb+CVSROOT+.
+For local Edinburgh this should be set to {\tt
+  /usr/local/reason/dream-src}.
+
+
+\subsection{Important CVS Commands and Flags}
+
+\subsubsection{Acquiring a Working Directory}
+{\tt cvs get} will copy a snapshot 
+    of the current state of the program in the repository into your
+    filespace.  For example
+\begin{verbatim}
+cvs get lambda-clam-teyjus
+\end{verbatim}
+ will copy
+    into your directory the current working version of \lclam\ on
+    the main branch.
+
+Note that {\tt get} is used to create directories.   The
+          top-level  directory  created  is  always  added to the
+          directory where checkout is invoked,  and  usually  has
+          the  same name as the specified module.  
+
+If you do not intend to use cvs for working on your files.
+      I.e. you don't intend to update or commit but will simply email
+      your changes at the end of your time working on them to the
+      developers or you do not want your changes to get into the main
+      distribution, then you can acquire a snapshot of the working
+      directory using {\tt cvs export}.  This will not allow
+      you to use commit or update.
+
+If you want to 
+      abandon a working directory for whatever
+      reason and no longer use it for committing or updating you should 
+      type {\tt cvs release .} in the directory you intend to abandon.
+
+Members of the Dream Group who are not based at
+  Edinburgh University can
+get a cope of \lclam\ from the Edinburgh CVS repository by typing
+
+\begin{verbatim}
+cvs -d :pserver:anonymous@broom.dai.ed.ac.uk:/usr/local/reason/dream-src 
+ login
+
+cvs -d :pserver:anonymous@broom.dai.ed.ac.uk:/usr/local/reason/dream-src 
+ checkout lambda-clam-teyjus
+\end{verbatim}
+
+The first of these will prompt you for a user name and password.  The
+password is currently empty (I'm sure Gordon will change this soon
+though!!)
+
+You will not be able to commit changes this way but will be able to
+track updates.
+
+
+\subsubsection{Committing Changes}
+Use {\tt cvs commit} when you want to     incorporate  changes
+          from  your working source files into the general source
+          repository.  {\tt cvs commit} will work recursively
+    through all the files and subdirectories from the one in which it
+    is typed.  It will only commit changes in files and directories
+    which {\em already exist} in the source repository.  New files
+    and directories should be added first by {\tt cvs add}.
+    Similarly files and directories you have removed should be removed 
+    by {\tt cvs remove}.
+
+{\tt cvs commit} verifies that your files are up to date.
+      I.e. that no one else has committed any changes since you last
+      updated.  If they are not up to date it will notify you and then 
+      exit without committing.  You will need to do an update before
+      you can commit your files.
+
+When all is well, an editor is invoked to allow you  to
+          enter a log message that will be written to one or more
+          logging programs and placed in  the  source  repository
+          file.  You can control the editor used by setting the
+      environment variable {\tt CVSEDITOR} or invoking
+      {\tt cvs commit} with the flag {\tt -e editor}.
+
+\subsubsection{Updating your working Directory}
+ After you've run checkout to create your  private  copy
+          of  the source from the common repository, other developers
+          will continue changing the central source.   From  time
+          to time, when it is convenient in your development process,
+    you can use the {\tt cvs update -d} command from  within  your
+          working directory to reconcile your work with any revisions
+    applied to  the source repository since your last 
+          checkout or update.
+
+The {\tt -d}  option to creates (or deletes)
+any directories
+      that  exist 
+          in  the  repository if they're missing from the working
+          directory.  (Normally, update acts only on  directories
+          that  were already enrolled in your working
+          directory.)
+
+
+\subsubsection{Adding a file to the Repository}
+Use {\tt cvs add} to create a new file  or   directory
+          in  the  source  repository.   The files or directories
+          specified with add must already exist  in  the  current
+          directory  (which  must  have  been  created  with  the
+          checkout  command). 
+
+For example
+\begin{verbatim}
+cvs add mytheory.mod
+\end{verbatim} schedules your
+    file {\tt mytheory.mod} to be placed in the repository
+    next time you commit some changes.  After this, anyone typing
+    {\tt cvs update} will get a copy of your file.  Similarly if you have
+    added a new directory you can add it in the same way.
+
+NB.  The file will not appear in the source repository until you
+      commit it.
+
+\subsubsection{Removing a file from the Repository}
+Use {\tt cvs remove} to remove a file you have deleted from the 
+    source repository.  
+As with {\tt cvs add} The files are not actually removed until
+    you apply your changes  to  the repository with commit.  
+
+\subsection{Final Word}
+This is only an overview of the major aspects of working with CVS.
+        You can find much more detail in the man pages or in various
+        guides and textbooks.

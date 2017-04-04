@@ -1,0 +1,147 @@
+-*- outline -*-
+
+* Known Bugs and Workarounds for Proof General.
+
+Contact:  mailto:bugs@proofgeneral.org
+See also: http://www.proofgeneral.org/ProofGeneral/BUGS
+
+Generic bugs are listed here, which may affect all of the supported
+provers.  See lego/BUGS coq/BUGS, etc, for specific bug lists for each
+of the provers supported.
+
+The bugs here are split into problems which apply for all Emacs
+versions, and those which only apply to particular versions.
+
+
+* Generic problems, for all Emacs versions
+
+** If the proof assistant goes into a loop displaying lots of information
+
+It may be difficult or impossible to interrupt it, because Emacs
+doesn't get a chance to process the C-c C-c keypress or "Stop" button
+push (or anything else).  In this situation, you will need to send an
+interrupt to the (e.g.) Isabelle process from another shell.  If that 
+doesn't stop things, you can try 'kill -FPE <emacs-pid>'.  
+This problem can happen with looping rewrite rules in the Isabelle
+simplifier, when tracing rewriting.
+
+** Toolbar enablers for XEmacs 21, some artefacts.
+
+ There is a timing issue, so that occasionally the buttons are
+ disabled/enabled when they shouldn't be.  An extra click on the
+ toolbar solves this.
+
+** Using C-g can leave script management in a mess.  
+
+  The code is not fully protected from Emacs interrupts.
+  Workaround: Don't type C-g while script management is processing.  
+  If you do, use proof-restart-scripting.
+
+** Outline-mode does not work in processed proof script files 
+
+ Because of read-only restrictions of the protected region.  
+ This is an inherent problem with outline because it works by 
+ modifying the buffer.
+ Workaround: none, nevermind.  (If it's hugely needed we could support
+ modified outline commands).
+
+** Multiple file scripting is slightly vulnerable.
+
+ Files are not locked when they are being read by the prover, so a long
+ file could be edited and saved as the prover is processing it,
+ resulting in a loss of synchronization between Emacs and the proof
+ assistant.  Files ought to be coloured red while they are being
+ processed, just as single lines are.   Workaround: be careful not
+ to edit a file as it is being read by the proof assistant!
+ (Only applies to Lego and Isabelle)
+
+** When proof-rsh-command is set to "ssh host", C-c C-c broken
+
+ The whole process may be killed instead of interrupted.  This isn't a
+ bug in Proof General, but the behaviour of ssh.  Try using rsh
+ instead, it is said to forward signals to the remote command.
+
+** In tty mode, the binding C-c C-RET has no effect.  
+
+ Workaround: manually bind C-c RET to 'proof-goto-point instead.
+
+** Active minibuffer can cause strange buffer selection behaviour.
+
+Try this: start PG/isar, step into a proof, activate a mini buffer (by
+visit-file etc.), now update goals output by clicking the toolbar.  PG
+will attempt to put the output into the minibuffer portion of the
+frame!  To get back to a sane state, use C-]
+
+* Problems with particular Emacs versions
+
+** Emacs menus: options not updated dynamically, positions erratic, etc.
+
+Also, proof assistant specific menus only appear in scripting buffer.
+These are drawbacks with FSF Emacs menu support.
+
+** Emacs faces sometimes faulty, esp in console mode
+
+Emacs support is let down in console mode, because faces are not
+implemented there.  (XEmacs can use colours and underline in console
+mode)
+
+** XEmacs 21.1.9 on Win32
+
+Some strange problems reading files with this version of Emacs. Gives
+spurious "end of internal input stream", or silently ignores parts of
+files.  Example is coq/coq.el which reads in fine on Linux.
+Solution: use a more recent version of XEmacs.  
+
+** If you have problems using Mule versions of FSF Emacs 
+
+Beware setting standard-display-european: Pascal Brisset suggests
+adding this line to .emacs should help:
+
+   (setq process-coding-system-alist '(("" . no-conversion))) 
+
+** Strict read only disabled by default in FSF Emacs.
+
+  Unfortunately strict read only is incompatible with font lock in
+  FSF Emacs, so it is disabled by default.  Instead, you get a warning message
+  if the locked region is edited.
+
+** In FSFmacs, spurious "Region read only" errors
+
+ Same problem as above, different symptom.
+ When proof-strict-read-only is set and font lock is on, these
+ errors are given which break font lock.   
+ Workaround: turn off proof-strict-read-only, font-lock, or for
+ the best of all possible worlds, switch to XEmacs.
+
+
+** XEmacs undo in the script buffer can edit the "uneditable region"
+
+  Test case: Insert some nonsense text after the locked region.
+  Kill the line. Process to the next command.
+  Press C-x u, nonsense text appears in locked region.
+  Workaround: take care with undo in XEmacs.
+
+** As of FSFmacs 20.3, multi-byte character codes are used.  
+
+  This breaks some of the code in Proof General, which is turned off in
+  case the suspicious looking function
+  toggle-enable-multibyte-characters is present.  The code that is
+  turned off deals with term markup for proof by pointing, which only
+  affects LEGO at the moment.  This problem could affect forthcoming
+  versions of XEmacs (but hasn't as far as XEmacs 21.1).  Can anybody
+  tell me if it affects Mule versions of Emacs?  Workaround: for LEGO
+  pbp, use FSFmacs 20.2, or XEmacs 20.4/later.
+
+** XEmacs sometimes has strange start-up delays of several seconds.
+
+ Possibly due to face allocation, when running remotely and
+ displaying on an 8-bit display.  One workaround (and in fact the
+ recommended way of working) is to run XEmacs locally and only
+ the proof assistant on your fast compute server, by setting 
+ proof-rsh-command.
+
+
+
+
+
+

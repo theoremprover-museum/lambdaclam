@@ -1,0 +1,32 @@
+/* Call waiting all active,  Call forward is disabled on all*/
+/* 1 dials 4, 1 and 4 get connected, then 2 dials 4, should be screened */
+
+Start-Interactive-MSC-Log 2 /* MSC with states and actions */
+Go
+Output-To num (1, 0, True, True, True, True, 0, True, 0, False , 0 ) <<Block Control_Software_1>> Control_Software_P1    /*First Block has the no. 1  */
+Output-To num (2, 0, True, True, True, True, 0, True, 0, False , 0 ) <<Block Control_Software_2>> Control_Software_P1    /*Second Block has the no. 2 */
+Output-To num (3, 0, True, True, True, True, 0, True, 0, False , 0 ) <<Block Control_Software_3>> Control_Software_P1    /*Third Block has the no. 3 */
+Output-To num (4, 0, True, True, True, True, 2, True, 0, False , 0 ) <<Block Control_Software_4>> Control_Software_P1    /*Forth Block has the no. 4 */
+Go
+
+/* , False , True             num(MyNumber, ForwardTo, */
+/* teenlinefeature_on,  	teenlinepinrequired_on, 	teenlinepincorrect, */
+/* terminatingcallscreeningfeature_on,	 screenedcaller,  callwaitingfeature_on, */
+/* reversechargingcallee,  deliveryblockingfeature_on, splitbillingcallee) */
+
+
+
+Output-To offhook (1, 1, 0) <<Block Control_Software_1>> Control_Software_P1
+Go
+Output-To dial (1, 1, 16) <<Block Control_Software_1>> Control_Software_P1
+Go
+Output-To dial (1, 1, 4) <<Block Control_Software_1>> Control_Software_P1
+Proceed-Until +10
+Output-To offhook (4, 4, 0) <<Block Control_Software_4>> Control_Software_P1
+Go
+Output-To offhook (2, 2, 0) <<Block Control_Software_2>> Control_Software_P1
+Go
+Output-To dial (2, 2, 16) <<Block Control_Software_2>> Control_Software_P1 
+Go
+Output-To dial (2, 2, 4) <<Block Control_Software_2>> Control_Software_P1
+Proceed-Until +10

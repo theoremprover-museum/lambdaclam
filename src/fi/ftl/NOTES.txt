@@ -1,0 +1,46 @@
+------------------------------------------
+This directory contains FTL for FOLTL
+latest update: September, 2002
+(Almost) compliant with LPAR '02
+------------------------------------------
+
+-------------------
+Module dependencies
+-------------------
+
+lists_          basic
+syntax_.sig     basic
+compound_tacs   accumulates lists_, syntax_
+frame           accumulates compound_tacs
+basic_tacs      accumulates compound_tacs; imports frame
+ftl             accumulates basic_tacs
+
+-------------------------------
+Main differences with modal FTL
+-------------------------------
+
+syntax_.sig     defines type nat_ (naturals) along with
+                - z_ : zero
+                - s_ : successor
+                - eq_ : equality
+                - allN_ : universal quantifier for naturals --- cannot use all_
+                          because of typing problems
+                - allU_ : universal quantifier for users --- ditto (it is the old
+                          plain all_)
+                - someN_ and someU_ : ditto
+                - operators next_, boxt_, until_ and wuntil_
+compound_tacs   no more iterative-deepening stuff
+basic_tacs      - a simple tactic, isol, to weaken repeatedly and isolate relevant
+                  formulae in sequents
+                - rules and tactics for new operators
+                - some more rules for generative operators (marked with a 2) in
+                  which it is possible to specify the time constant to use
+                  (useful for proof presentation)
+
+-------------
+General notes
+-------------
+
+. we use a slightly uncommon definition of the until operator. Basically
+  we assume that p also holds at the time q holds: this seems to make
+  easier and more intuitive the modelling of transition systems.
